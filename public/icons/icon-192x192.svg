@@ -1,0 +1,23 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Background -->
+  <path d="M96 16C54.6 16 16 54.6 16 96C16 137.4 54.6 137.4 96 137.4C137.4 54.6 96 16 96 16C96 16 137.4 54.6 137.4 96C137.4 54.6 96 16 96 16C96 16 137.4 54.6 137.4 96C137.4 54.6 96 16 96 16C96 16 137.4 54.6 137.4 96C137.4 54.6 96 16 96 16Z" fill="url(#shield-gradient)"/>
+  
+  <!-- Shield Border -->
+  <path d="M96 24L48 48V144C48 148.4 51.6 152 56C60.4 152 72 148.4 144 136V48L96 24Z" stroke="#3B82F6" stroke-width="2" fill="none"/>
+  
+  <!-- Location Pin -->
+  <circle cx="96" cy="88" r="8" fill="#DC2626"/>
+  <path d="M96 80L92 84H100L96 80Z" fill="#DC2626"/>
+  <path d="M96 96L88 104H104L96 96Z" fill="#DC2626"/>
+  
+  <!-- Shield Shine Effect -->
+  <path d="M96 32L64 64L96 96L128 64L96 32Z" fill="white" opacity="0.3"/>
+  
+  <!-- Definitions -->
+  <defs>
+    <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1D9E75;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
