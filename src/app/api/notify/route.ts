@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import { emailService, generateTrackingLink, generateDigitalIdLink } from "@/lib/emailService";
-import { smsService, validateTwilioConfig } from "@/lib/smsService";
+import { smsService, validateSMSConfig } from "@/lib/smsService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     // Channel 3: SMS Notifications (Only for PANIC alerts)
     if (alert.type === "panic" || alert.type === "sos") {
       notificationPromises.push(
-        handleSMSNotifications(tourist, emergencyContacts, trackingLink)
+        handleSMSNotifications(alert, tourist, emergencyContacts, trackingLink)
           .then((result) => {
             notificationResults.sms = result;
           })
@@ -287,30 +287,32 @@ async function handleEmailNotifications(
 }
 
 async function handleSMSNotifications(
+  alert: any,
   tourist: any,
   emergencyContacts: any[],
   trackingLink: string
 ) {
   try {
-    // Validate Twilio configuration
-    const twilioConfig = validateTwilioConfig();
-    if (!twilioConfig.isValid) {
+    // Validate SMS configuration
+    const smsConfig = validateSMSConfig();
+    if (!smsConfig.isValid) {
       return {
         success: false,
         message: "",
-        error: `Twilio not configured: ${twilioConfig.missingVars.join(", ")}`,
+        error: `SMS not configured: ${smsConfig.missingVars.join(", ")}`,
       };
     }
 
-    await smsService.sendPanicAlertSMS({
-      touristName: tourist.full_name,
-      emergencyContacts: emergencyContacts.map(c => ({
-        name: c.name,
-        phone: c.phone_number,
-      })),
-      alertTime: new Date().toISOString(),
-      trackingLink,
-    });
+    // Send SMS notifications
+    if (tourist.smsNotifications && emergencyContacts.length > 0) {
+      await smsService.sendAlertSMS({
+        touristName: tourist.full_name,
+        alertType: alert.type,
+        location: `${alert.latitude}, ${alert.longitude}`,
+        trackingLink,
+        emergencyContacts: emergencyContacts.filter((contact: EmergencyContact) => contact.email)
+      });
+    }
 
     return {
       success: true,

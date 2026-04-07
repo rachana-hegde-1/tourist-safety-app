@@ -7,6 +7,55 @@ interface EmailService {
   sendPanicAlertEmail: (data: PanicAlertEmailData) => Promise<void>;
   sendGeoFenceAlertEmail: (data: GeoFenceAlertEmailData) => Promise<void>;
   sendDailySafetySummary: (data: DailySafetySummaryData) => Promise<void>;
+  sendAlertEmail: (data: AlertEmailData) => Promise<void>;
+}
+
+interface EmergencyContact {
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+interface AlertEmailData {
+  to: string;
+  touristName: string;
+  alertType: string;
+  location: string;
+  trackingLink: string;
+  emergencyContacts: Array<EmergencyContact>;
+}
+
+interface PanicAlertEmailData {
+  to: string;
+  touristName: string;
+  alertType: string;
+  emergencyContacts: Array<{ email: string; phone?: string }>;
+}
+
+interface PanicAlertEmailData {
+  to: string;
+  touristName: string;
+  alertType: string;
+  location: string;
+  trackingLink: string;
+  emergencyContacts: Array<{ email: string; phone?: string }>;
+}
+
+interface GeoFenceAlertEmailData {
+  to: string;
+  touristName: string;
+  alertType: string;
+  location: string;
+  trackingLink: string;
+  emergencyContacts: Array<EmergencyContact>;
+}
+
+interface DailySafetySummaryData {
+  touristName: string;
+  safetyScore: number;
+  activityCount: number;
+  phone?: string;
+  email: string;
 }
 
 interface WelcomeEmailData {

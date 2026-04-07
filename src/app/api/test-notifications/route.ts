@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import { emailService, generateTrackingLink, generateDigitalIdLink } from "@/lib/emailService";
-import { smsService, validateTwilioConfig } from "@/lib/smsService";
+import { smsService, validateSMSConfig } from "@/lib/smsService";
 
 export async function POST(request: NextRequest) {
   try {
@@ -279,7 +279,7 @@ async function testPanicAlert(tourist: any, testResults: any) {
 
     // Test SMS
     const twilioConfig = validateTwilioConfig();
-    if (twilioConfig.isValid) {
+    if (twilioConfig.isValid && tourist.emergency_contacts.length > 0) {
       await smsService.sendPanicAlertSMS({
         touristName: tourist.full_name,
         emergencyContacts: tourist.emergency_contacts,
