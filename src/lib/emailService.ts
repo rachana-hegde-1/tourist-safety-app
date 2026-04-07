@@ -29,17 +29,13 @@ interface PanicAlertEmailData {
   to: string;
   touristName: string;
   alertType: string;
-  emergencyContacts: Array<{ email: string; phone?: string }>;
-}
-
-interface PanicAlertEmailData {
-  to: string;
-  touristName: string;
-  alertType: string;
+  emergencyContacts: Array<EmergencyContact>;
   location: string;
   trackingLink: string;
-  emergencyContacts: Array<{ email: string; phone?: string }>;
+  alertTime?: string;
+  touristPhone?: string;
 }
+
 
 interface GeoFenceAlertEmailData {
   to: string;

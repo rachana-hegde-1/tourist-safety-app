@@ -221,55 +221,49 @@ async function handleEmailNotifications(
       case "panic":
       case "sos":
         emailResult = await emailService.sendPanicAlertEmail({
+          to: tourist.email,
           touristName: tourist.full_name,
+          alertType: alert.type,
           emergencyContacts: emergencyContacts.map(c => ({
             name: c.name,
             email: c.email,
           })),
-          alertTime: alert.timestamp,
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
-          touristPhone: tourist.phone_number,
         });
         break;
 
       case "geo_fence":
         emailResult = await emailService.sendGeoFenceAlertEmail({
+          to: tourist.email,
           touristName: tourist.full_name,
+          alertType: "geo_fence",
           emergencyContacts: emergencyContacts.map(c => ({
             name: c.name,
             email: c.email,
           })),
-          alertTime: alert.timestamp,
-          currentLocation: `${alert.latitude}, ${alert.longitude}`,
-          safeZone: alert.zone_name || "Safe Zone",
+          location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
-          touristPhone: tourist.phone_number,
         });
         break;
 
-      case "daily_summary":
-        // This would be handled by a scheduled job
-        emailResult = await emailService.sendDailySafetySummary({
-          touristName: tourist.full_name,
-          touristEmail: tourist.email,
-          date: alert.timestamp,
-          activeAlerts: alert.active_alerts || [],
-          totalLocations: alert.total_locations || 0,
-          lastLocation: `${alert.latitude}, ${alert.longitude}`,
-          emergencyContacts: emergencyContacts.map(c => ({
-            name: c.name,
-            phone: c.phone_number,
-          })),
-        });
-        break;
+    case "daily_summary":
+      // This would be handled by a scheduled job
+      emailResult = await emailService.sendDailySafetySummary({
+        touristName: tourist.full_name,
+        safetyScore: alert.safety_score || 85,
+        activityCount: alert.activity_count || 10,
+        phone: tourist.phone_number,
+        email: tourist.email,
+      });
+      break;
 
-      default:
-        return {
-          success: false,
-          message: "",
-          error: `Unknown alert type: ${alertType}`,
-        };
+    default:
+      return {
+        success: false,
+        message: "",
+        error: `Unknown alert type: ${alertType}`,
+      };
     }
 
     return {
