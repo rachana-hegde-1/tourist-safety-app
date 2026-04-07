@@ -1,5 +1,6 @@
 "use client"
 
+// Switch component for wearable simulator and admin dashboard
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
 
