@@ -1,6 +1,6 @@
 "use client"
 
-// Switch component for wearable simulator and admin dashboard
+// Switch component for wearable simulator and admin dashboard - Updated 2026-04-07
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
