@@ -197,7 +197,7 @@ export function WearableSimulatorClient() {
                 <Switch
                   id="sos"
                   checked={sosTriggered}
-                  onCheckedChange={setSosTriggered}
+                  onChange={setSosTriggered}
                 />
               </div>
 
@@ -211,7 +211,7 @@ export function WearableSimulatorClient() {
                 <Switch
                   id="fall"
                   checked={fallDetected}
-                  onCheckedChange={setFallDetected}
+                  onChange={setFallDetected}
                 />
               </div>
 
@@ -225,7 +225,7 @@ export function WearableSimulatorClient() {
                 <Switch
                   id="battery"
                   checked={lowBattery}
-                  onCheckedChange={setLowBattery}
+                  onChange={setLowBattery}
                 />
               </div>
             </div>

@@ -209,7 +209,7 @@ export function NotificationSettings() {
                 <Switch
                   id="email-notifications"
                   checked={settings.emailNotifications}
-                  onCheckedChange={(checked) =>
+                  onChange={(checked) =>
                     setSettings(prev => ({ ...prev, emailNotifications: checked }))
                   }
                 />
@@ -225,7 +225,7 @@ export function NotificationSettings() {
                 <Switch
                   id="sms-notifications"
                   checked={settings.smsNotifications}
-                  onCheckedChange={(checked) =>
+                  onChange={(checked) =>
                     setSettings(prev => ({ ...prev, smsNotifications: checked }))
                   }
                 />
@@ -251,7 +251,7 @@ export function NotificationSettings() {
                 <Switch
                   id="push-notifications"
                   checked={settings.pushNotifications}
-                  onCheckedChange={handlePushNotificationToggle}
+                  onChange={handlePushNotificationToggle}
                   disabled={!isSupported || permission.denied}
                 />
               </div>
@@ -266,7 +266,7 @@ export function NotificationSettings() {
                 <Switch
                   id="daily-summary"
                   checked={settings.dailySummaryEnabled}
-                  onCheckedChange={(checked) =>
+                  onChange={(checked) =>
                     setSettings(prev => ({ ...prev, dailySummaryEnabled: checked }))
                   }
                 />
@@ -300,7 +300,7 @@ export function NotificationSettings() {
                         </div>
                         <Switch
                           checked={enabled}
-                          onCheckedChange={(checked) => updatePreference(alertType, channel, checked)}
+                          onChange={(checked) => updatePreference(alertType, channel, checked)}
                           disabled={
                             (channel === "push" && (!isSupported || permission.denied)) ||
                             (channel === "sms" && !settings.smsNotifications) ||
