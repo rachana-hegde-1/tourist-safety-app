@@ -35,7 +35,13 @@ export function ProfileClient({ touristId }: { touristId: string }) {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
     mapRef.current = map;
-    return () => map.remove();
+    
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   React.useEffect(() => {

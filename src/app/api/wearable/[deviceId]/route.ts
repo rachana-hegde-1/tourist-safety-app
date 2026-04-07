@@ -28,11 +28,13 @@ const ratelimit = new Ratelimit({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { deviceId: string } }
+  { params }: { params: Promise<{ deviceId: string }> }
 ) {
   try {
+    const { deviceId } = await params;
+    
     // Validate device ID
-    const deviceIdValidation = DeviceIdSchema.safeParse(params.deviceId);
+    const deviceIdValidation = DeviceIdSchema.safeParse(deviceId);
     if (!deviceIdValidation.success) {
       return NextResponse.json(
         { error: "Invalid device ID format" },
@@ -59,7 +61,7 @@ export async function POST(
     }
 
     // Apply rate limiting
-    const identifier = `wearable:${params.deviceId}`;
+    const identifier = `wearable:${deviceId}`;
     const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
 
     if (!success) {
@@ -96,7 +98,7 @@ export async function POST(
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
       .select("device_id, linked_user_id, is_active")
-      .eq("device_id", params.deviceId)
+      .eq("device_id", deviceId)
       .single();
 
     if (wearableError || !wearable || !wearable.is_active || !wearable.linked_user_id) {
@@ -115,7 +117,7 @@ export async function POST(
         longitude,
         timestamp: new Date().toISOString(),
         source: "wearable",
-        device_id: params.deviceId
+        device_id: deviceId
       });
 
     if (locationError) {
@@ -136,7 +138,7 @@ export async function POST(
           latitude,
           longitude,
           timestamp: new Date().toISOString(),
-          device_id: params.deviceId,
+          device_id: deviceId,
           status: "active",
           message: message || `${type} detected from wearable device`
         });
@@ -164,7 +166,7 @@ export async function POST(
         success: true,
         message: "Wearable data processed successfully",
         data: {
-          deviceId: params.deviceId,
+          deviceId,
           latitude,
           longitude,
           sos_triggered,

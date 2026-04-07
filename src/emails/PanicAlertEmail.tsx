@@ -1,4 +1,4 @@
-import { Button, Container, Head, Html, Img, Preview, Section, Text, Row, Column, Font } from "@react-email/components";
+import { Body, Button, Container, Head, Html, Img, Preview, Section, Text, Row, Column, Font } from "@react-email/components";
 
 interface PanicAlertEmailProps {
   touristName: string;

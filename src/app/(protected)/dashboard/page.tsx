@@ -13,8 +13,8 @@ type AlertRow = {
   id: string;
   type: string;
   created_at: string;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number | undefined;
+  longitude: number | undefined;
 };
 
 export default async function DashboardPage() {

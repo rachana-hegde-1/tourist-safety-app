@@ -5,7 +5,7 @@ export function useT() {
   return t;
 }
 
-export function useTranslationKey(key: string, options?: any) {
+export function useTranslationKey() {
   const { t } = useTranslation();
-  return t(key, options);
+  return { t };
 }

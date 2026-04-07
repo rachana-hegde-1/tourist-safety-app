@@ -23,15 +23,17 @@ export function InstallPrompt({ className = "" }: InstallPromptProps) {
     
     // Check if app is already installed
     const isInstalled = localStorage.getItem("pwa-installed");
+    let timer: NodeJS.Timeout | undefined;
+    
     if (!isInstalled) {
-      const timer: NodeJS.Timeout = setTimeout(() => {
+      timer = setTimeout(() => {
         setShowPrompt(true);
       }, 30000); // Show after 30 seconds
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 

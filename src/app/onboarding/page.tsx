@@ -369,7 +369,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <Sheet>
-                  <SheetTrigger asChild>
+                  <SheetTrigger>
                     <Button type="button" variant="outline">
                       Preview trip summary
                     </Button>
@@ -410,7 +410,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-                    <DialogTrigger asChild>
+                    <DialogTrigger>
                       <Button type="button" variant="outline">
                         Add contact
                       </Button>

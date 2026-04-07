@@ -1,7 +1,7 @@
 "use client";
 
 import { InstallPrompt } from "@/components/install-prompt/InstallPrompt";
-import { LanguageSelector } from "@/components/language-selector/LanguageSelector";
+import { LanguageSelector } from "@/components/language-selector/SimpleLanguageSelector";
 
 export function PWALayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +15,7 @@ export function PWALayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-medium text-gray-700">Tourist Safety</span>
           </div>
           
-          <SimpleLanguageSelector />
+          <LanguageSelector />
         </div>
       </div>
       

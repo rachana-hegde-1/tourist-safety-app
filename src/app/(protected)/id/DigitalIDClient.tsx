@@ -54,8 +54,7 @@ export function DigitalIDClient({ tourist }: DigitalIDClientProps) {
     setIsDownloading(true);
     try {
       const canvas = await html2canvas(idCardRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
+        background: "#ffffff",
         logging: false,
       });
 
