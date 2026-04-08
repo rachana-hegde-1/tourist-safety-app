@@ -310,7 +310,7 @@ async function handleSMSNotifications(
         alertType: alert.type,
         location: `${alert.latitude}, ${alert.longitude}`,
         trackingLink,
-        emergencyContacts: emergencyContacts.filter((contact: EmergencyContact) => contact.email)
+        emergencyContacts: emergencyContacts.filter((contact: any) => contact.email)
       });
     }
 
