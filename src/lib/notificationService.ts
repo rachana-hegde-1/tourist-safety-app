@@ -1,5 +1,5 @@
 import { smsService } from "./smsService";
-import { emailService } from "./emailService";
+import { emailService, AlertEmailData } from "./emailService";
 import { createSupabaseAdminClient } from "./supabase";
 
 interface NotificationService {
@@ -21,6 +21,10 @@ interface AlertData {
 export const notificationService: NotificationService = {
   async sendWelcomeEmail(data: any): Promise<void> {
     await emailService.sendWelcomeEmail(data);
+  },
+
+  async sendAlertEmail(data: AlertEmailData): Promise<void> {
+    await emailService.sendAlertEmail(data);
   },
 
   async sendAlertNotifications(alertData: any): Promise<void> {
@@ -76,7 +80,7 @@ export const notificationService: NotificationService = {
   async sendDailySummary(data: any): Promise<void> {
     // Send daily summary via email
     if (data.emailNotifications) {
-      await emailService.sendDailySummary(data);
+      await emailService.sendDailySafetySummary(data);
     }
 
     // Send daily summary via SMS

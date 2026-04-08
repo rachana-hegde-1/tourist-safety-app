@@ -161,23 +161,21 @@ async function testEmailNotifications(tourist: any, testResults: any) {
 
 async function testSMSNotifications(tourist: any, testResults: any) {
   try {
-    const twilioConfig = validateTwilioConfig();
-    if (!twilioConfig.isValid) {
-      testResults.results.sms = {
-        success: false,
-        message: "Twilio not configured",
-        error: `Missing: ${twilioConfig.missingVars.join(", ")}`,
-      };
-      return;
-    }
+    // SMS simulation is always available
+    testResults.results.sms = {
+      success: true,
+      message: "SMS simulation ready",
+      error: null,
+    };
 
     const trackingLink = `https://tourist-safety.gov.in/track/test-123`;
     
-    await smsService.sendPanicAlertSMS({
+    await smsService.sendAlertSMS({
       touristName: tourist.full_name,
-      emergencyContacts: tourist.emergency_contacts,
-      alertTime: new Date().toISOString(),
+      alertType: "panic",
+      location: "Test Location",
       trackingLink,
+      emergencyContacts: tourist.emergency_contacts || [],
     });
 
     testResults.results.sms = {
@@ -266,7 +264,9 @@ async function testPanicAlert(tourist: any, testResults: any) {
     
     // Test email
     await emailService.sendPanicAlertEmail({
+      to: tourist.email,
       touristName: tourist.full_name,
+      alertType: "panic",
       emergencyContacts: tourist.emergency_contacts.map((c: any) => ({
         name: c.name,
         email: c.email,
@@ -277,14 +277,14 @@ async function testPanicAlert(tourist: any, testResults: any) {
       touristPhone: tourist.phone_number,
     });
 
-    // Test SMS
-    const twilioConfig = validateTwilioConfig();
-    if (twilioConfig.isValid && tourist.emergency_contacts.length > 0) {
-      await smsService.sendPanicAlertSMS({
+    // Test SMS (simulation always available)
+    if (tourist.emergency_contacts.length > 0) {
+      await smsService.sendAlertSMS({
         touristName: tourist.full_name,
-        emergencyContacts: tourist.emergency_contacts,
-        alertTime: new Date().toISOString(),
+        alertType: "panic",
+        location: "Test Location",
         trackingLink,
+        emergencyContacts: tourist.emergency_contacts || [],
       });
     }
 
@@ -292,10 +292,10 @@ async function testPanicAlert(tourist: any, testResults: any) {
       success: true,
       message: "PANIC alert notifications sent successfully",
       email_sent: true,
-      sms_sent: twilioConfig.isValid,
+      sms_sent: true,
       recipients: {
         email: tourist.emergency_contacts.map((c: any) => c.email),
-        sms: twilioConfig.isValid ? tourist.emergency_contacts.map((c: any) => c.phone_number) : [],
+        sms: tourist.emergency_contacts.map((c: any) => c.phone_number),
       },
     };
   } catch (error) {
@@ -312,14 +312,17 @@ async function testGeoFenceAlert(tourist: any, testResults: any) {
     const trackingLink = generateTrackingLink("test-geofence-123", tourist.tourist_id);
     
     await emailService.sendGeoFenceAlertEmail({
+      to: tourist.email,
       touristName: tourist.full_name,
+      alertType: "geo_fence",
       emergencyContacts: tourist.emergency_contacts.map((c: any) => ({
         name: c.name,
         email: c.email,
       })),
       alertTime: new Date().toISOString(),
+      location: "28.6139, 77.2090 (New Delhi)",
       currentLocation: "28.6139, 77.2090 (New Delhi)",
-      safeZone: "Connaught Place Area",
+      safeZone: "India Gate Area",
       trackingLink,
       touristPhone: tourist.phone_number,
     });
@@ -342,15 +345,18 @@ async function testDailySummary(tourist: any, testResults: any) {
   try {
     await emailService.sendDailySafetySummary({
       touristName: tourist.full_name,
-      touristEmail: tourist.email,
+      safetyScore: 85,
+      activityCount: 15,
+      phone: tourist.phone_number,
+      email: tourist.email,
       date: new Date().toISOString(),
       activeAlerts: [
         {
-          type: "low_battery",
-          time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          type: "geo_fence",
+          time: new Date().toISOString(),
           location: "28.6139, 77.2090",
-          status: "active",
-        }
+          status: "resolved",
+        },
       ],
       totalLocations: 15,
       lastLocation: "28.6139, 77.2090 (New Delhi)",
@@ -383,9 +389,9 @@ export async function GET(request: NextRequest) {
           status: process.env.RESEND_API_KEY ? "Ready" : "Not configured",
         },
         sms: {
-          configured: validateTwilioConfig().isValid,
-          status: validateTwilioConfig().isValid ? "Ready" : "Not configured",
-          missing: validateTwilioConfig().missingVars,
+          configured: true,
+          status: "Ready (Simulation)",
+          missing: [],
         },
         push: {
           configured: !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,

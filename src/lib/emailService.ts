@@ -17,7 +17,7 @@ interface EmergencyContact {
   phone?: string;
 }
 
-interface AlertEmailData {
+export interface AlertEmailData {
   to: string;
   touristName: string;
   alertType: string;
