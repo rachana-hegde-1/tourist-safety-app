@@ -1,5 +1,3 @@
-import { Resend } from "resend";
-
 // Email service for tourist safety notifications - Updated 2026-04-08
 
 interface EmailService {
@@ -95,6 +93,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateWelcomeEmailHtml(data);
 
+      const { Resend } = await import("resend");
       await new Resend(process.env.RESEND_API_KEY).emails.send({
         from: "Tourist Safety System <noreply@tourist-safety.gov.in>",
         to: [data.touristEmail],
@@ -114,6 +113,7 @@ export class EmailNotificationService implements EmailService {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generatePanicAlertEmailHtml(data, contact.name);
 
+        const { Resend } = await import("resend");
         return new Resend(process.env.RESEND_API_KEY).emails.send({
           from: "Tourist Safety System <alerts@tourist-safety.gov.in>",
           to: [contact.email],
@@ -135,6 +135,7 @@ export class EmailNotificationService implements EmailService {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generateGeoFenceAlertEmailHtml(data, contact.name);
 
+        const { Resend } = await import("resend");
         return new Resend(process.env.RESEND_API_KEY).emails.send({
           from: "Tourist Safety System <alerts@tourist-safety.gov.in>",
           to: [contact.email],
@@ -155,6 +156,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateAlertEmailHtml(data);
       
+      const { Resend } = await import("resend");
       await new Resend(process.env.RESEND_API_KEY).emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
         to: [data.to],
@@ -173,6 +175,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateDailySafetySummaryHtml(data);
       
+      const { Resend } = await import("resend");
       await new Resend(process.env.RESEND_API_KEY).emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
         to: [data.email],
