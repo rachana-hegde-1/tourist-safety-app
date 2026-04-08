@@ -90,6 +90,12 @@ interface DailySafetySummaryData {
 
 export class EmailNotificationService implements EmailService {
   async sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
+    // Skip email sending during build time
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log("Skipping email during build time");
+      return;
+    }
+
     try {
       const emailHtml = this.generateWelcomeEmailHtml(data);
 
@@ -109,6 +115,12 @@ export class EmailNotificationService implements EmailService {
   }
 
   async sendPanicAlertEmail(data: PanicAlertEmailData): Promise<void> {
+    // Skip email sending during build time
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log("Skipping email during build time");
+      return;
+    }
+
     try {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generatePanicAlertEmailHtml(data, contact.name);
@@ -131,6 +143,12 @@ export class EmailNotificationService implements EmailService {
   }
 
   async sendGeoFenceAlertEmail(data: GeoFenceAlertEmailData): Promise<void> {
+    // Skip email sending during build time
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log("Skipping email during build time");
+      return;
+    }
+
     try {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generateGeoFenceAlertEmailHtml(data, contact.name);
@@ -153,6 +171,12 @@ export class EmailNotificationService implements EmailService {
   }
 
   async sendAlertEmail(data: AlertEmailData): Promise<void> {
+    // Skip email sending during build time
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log("Skipping email during build time");
+      return;
+    }
+
     try {
       const emailHtml = this.generateAlertEmailHtml(data);
       
@@ -172,6 +196,12 @@ export class EmailNotificationService implements EmailService {
   }
 
   async sendDailySafetySummary(data: DailySafetySummaryData): Promise<void> {
+    // Skip email sending during build time
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log("Skipping email during build time");
+      return;
+    }
+
     try {
       const emailHtml = this.generateDailySafetySummaryHtml(data);
       
