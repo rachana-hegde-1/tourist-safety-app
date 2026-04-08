@@ -44,6 +44,10 @@ interface GeoFenceAlertEmailData {
   location: string;
   trackingLink: string;
   emergencyContacts: Array<EmergencyContact>;
+  alertTime?: string;
+  currentLocation?: string;
+  safeZone?: string;
+  touristPhone?: string;
 }
 
 interface DailySafetySummaryData {
@@ -63,44 +67,24 @@ interface WelcomeEmailData {
   destination: string;
 }
 
-interface PanicAlertEmailData {
-  touristName: string;
-  emergencyContacts: Array<{
-    name: string;
-    email: string;
-  }>;
-  alertTime: string;
-  location: string;
-  trackingLink: string;
-  touristPhone: string;
-}
-
-interface GeoFenceAlertEmailData {
-  touristName: string;
-  emergencyContacts: Array<{
-    name: string;
-    email: string;
-  }>;
-  alertTime: string;
-  currentLocation: string;
-  safeZone: string;
-  trackingLink: string;
-  touristPhone: string;
-}
 
 interface DailySafetySummaryData {
   touristName: string;
-  touristEmail: string;
-  date: string;
-  activeAlerts: Array<{
+  safetyScore: number;
+  activityCount: number;
+  phone?: string;
+  email: string;
+  touristEmail?: string;
+  date?: string;
+  activeAlerts?: Array<{
     type: string;
     time: string;
     location: string;
     status: string;
   }>;
-  totalLocations: number;
-  lastLocation: string;
-  emergencyContacts: Array<{
+  totalLocations?: number;
+  lastLocation?: string;
+  emergencyContacts?: Array<{
     name: string;
     phone: string;
   }>;
@@ -167,22 +151,92 @@ export class EmailNotificationService implements EmailService {
     }
   }
 
+  async sendAlertEmail(data: AlertEmailData): Promise<void> {
+    try {
+      const emailHtml = this.generateAlertEmailHtml(data);
+      
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
+        to: [data.to],
+        subject: `Safety Alert - ${data.alertType}`,
+        html: emailHtml,
+      });
+      
+      console.log(`Alert email sent to ${data.to}`);
+    } catch (error) {
+      console.error("Error sending alert email:", error);
+      throw error;
+    }
+  }
+
   async sendDailySafetySummary(data: DailySafetySummaryData): Promise<void> {
     try {
       const emailHtml = this.generateDailySafetySummaryHtml(data);
-
+      
       await resend.emails.send({
-        from: "Tourist Safety System <noreply@tourist-safety.gov.in>",
-        to: [data.touristEmail],
-        subject: `Daily Safety Summary - ${new Date(data.date).toLocaleDateString()}`,
+        from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
+        to: [data.email],
+        subject: `Daily Safety Summary - ${data.touristName}`,
         html: emailHtml,
       });
-
-      console.log("Daily safety summary sent successfully to:", data.touristEmail);
+      
+      console.log(`Daily summary email sent to ${data.email}`);
     } catch (error) {
-      console.error("Error sending daily safety summary:", error);
-      throw new Error(`Failed to send daily safety summary: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Error sending daily summary email:", error);
+      throw error;
     }
+  }
+
+  private generateAlertEmailHtml(data: AlertEmailData): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Safety Alert - ${data.alertType}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { background-color: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; margin: -30px -30px 20px -30px; }
+          .alert-info { background-color: #fef2f2; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          .tracking-link { background-color: #1e40af; color: white; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0; }
+          .tracking-link a { color: white; text-decoration: none; font-weight: bold; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1> SAFETY ALERT</h1>
+            <p>${data.alertType.toUpperCase()} DETECTED</p>
+          </div>
+          
+          <div class="alert-info">
+            <h3>Tourist: ${data.touristName}</h3>
+            <p><strong>Alert Type:</strong> ${data.alertType}</p>
+            <p><strong>Location:</strong> ${data.location}</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+          
+          <div class="tracking-link">
+            <a href="${data.trackingLink}">TRACK TOURIST LOCATION</a>
+          </div>
+          
+          <div class="emergency-contacts">
+            <h3>Emergency Contacts:</h3>
+            ${data.emergencyContacts.map(contact => `
+              <p><strong>${contact.name}:</strong> ${contact.email}</p>
+            `).join('')}
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated safety alert from the Tourist Safety System.</p>
+            <p>Please take immediate action if you are an emergency contact.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
   }
 
   private generateWelcomeEmailHtml(data: WelcomeEmailData): string {
