@@ -1,7 +1,14 @@
 import { Resend } from "resend";
 
 // Email service for tourist safety notifications - Updated 2026-04-08
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 interface EmailService {
   sendWelcomeEmail: (data: WelcomeEmailData) => Promise<void>;
@@ -96,7 +103,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateWelcomeEmailHtml(data);
 
-      await resend.emails.send({
+      await getResendClient().emails.send({
         from: "Tourist Safety System <noreply@tourist-safety.gov.in>",
         to: [data.touristEmail],
         subject: "Welcome to Tourist Safety System - Your Digital ID is Ready",
@@ -115,7 +122,7 @@ export class EmailNotificationService implements EmailService {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generatePanicAlertEmailHtml(data, contact.name);
 
-        return resend.emails.send({
+        return getResendClient().emails.send({
           from: "Tourist Safety System <alerts@tourist-safety.gov.in>",
           to: [contact.email],
           subject: `URGENT: Emergency Alert for ${data.touristName}`,
@@ -136,7 +143,7 @@ export class EmailNotificationService implements EmailService {
       const emailPromises = data.emergencyContacts.map(async (contact) => {
         const emailHtml = this.generateGeoFenceAlertEmailHtml(data, contact.name);
 
-        return resend.emails.send({
+        return getResendClient().emails.send({
           from: "Tourist Safety System <alerts@tourist-safety.gov.in>",
           to: [contact.email],
           subject: `Zone Breach Alert for ${data.touristName}`,
@@ -156,7 +163,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateAlertEmailHtml(data);
       
-      await resend.emails.send({
+      await getResendClient().emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
         to: [data.to],
         subject: `Safety Alert - ${data.alertType}`,
@@ -174,7 +181,7 @@ export class EmailNotificationService implements EmailService {
     try {
       const emailHtml = this.generateDailySafetySummaryHtml(data);
       
-      await resend.emails.send({
+      await getResendClient().emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Tourist Safety <noreply@touristsafety.com>",
         to: [data.email],
         subject: `Daily Safety Summary - ${data.touristName}`,
