@@ -230,6 +230,8 @@ async function handleEmailNotifications(
           })),
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
+          alertTime: alert.timestamp,
+          touristPhone: tourist.phone_number,
         });
         break;
 
@@ -244,6 +246,10 @@ async function handleEmailNotifications(
           })),
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
+          alertTime: alert.timestamp,
+          currentLocation: `${alert.latitude}, ${alert.longitude}`,
+          safeZone: alert.safe_zone_name || "Safe Zone",
+          touristPhone: tourist.phone_number,
         });
         break;
 
