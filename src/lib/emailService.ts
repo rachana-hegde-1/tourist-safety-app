@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 
+// Email service for tourist safety notifications - Updated 2026-04-08
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface EmailService {
@@ -224,7 +225,7 @@ export class EmailNotificationService implements EmailService {
           
           <div class="emergency-contacts">
             <h3>Emergency Contacts:</h3>
-            ${data.emergencyContacts.map(contact => `
+            ${(data.emergencyContacts || []).map(contact => `
               <p><strong>${contact.name}:</strong> ${contact.email}</p>
             `).join('')}
           </div>
@@ -267,7 +268,7 @@ export class EmailNotificationService implements EmailService {
             
             <h3>Your Trip Details</h3>
             <p><strong>Destination:</strong> ${data.destination}</p>
-            <p><strong>Trip Period:</strong> ${new Date(data.tripStartDate).toLocaleDateString()} - ${new Date(data.tripEndDate).toLocaleDateString()}</p>
+            <p><strong>Trip Period:</strong> ${new Date(data.tripStartDate || '').toLocaleDateString()} - ${new Date(data.tripEndDate || '').toLocaleDateString()}</p>
             
             <a href="${data.digitalIdUrl}" class="button">View Your Digital ID</a>
             
@@ -324,7 +325,7 @@ export class EmailNotificationService implements EmailService {
             <div class="details">
               <h3>Emergency Details</h3>
               <p><strong>Tourist:</strong> ${data.touristName}</p>
-              <p><strong>Time:</strong> ${new Date(data.alertTime).toLocaleString()}</p>
+              <p><strong>Time:</strong> ${new Date(data.alertTime || new Date()).toLocaleString()}</p>
               <p><strong>Location:</strong> ${data.location}</p>
               <p><strong>Contact:</strong> ${data.touristPhone}</p>
               <p><strong>Status:</strong> <span style="color: #dc2626; font-weight: bold;">ACTIVE EMERGENCY</span></p>
@@ -392,7 +393,7 @@ export class EmailNotificationService implements EmailService {
             <div class="details">
               <h3>Breach Details</h3>
               <p><strong>Tourist:</strong> ${data.touristName}</p>
-              <p><strong>Time:</strong> ${new Date(data.alertTime).toLocaleString()}</p>
+              <p><strong>Time:</strong> ${new Date(data.alertTime || new Date()).toLocaleString()}</p>
               <p><strong>Current Location:</strong> ${data.currentLocation}</p>
               <p><strong>Safe Zone:</strong> ${data.safeZone}</p>
               <p><strong>Status:</strong> <span style="color: #92400e; font-weight: bold;">OUTSIDE SAFE ZONE</span></p>
@@ -427,18 +428,18 @@ export class EmailNotificationService implements EmailService {
   }
 
   private generateDailySafetySummaryHtml(data: DailySafetySummaryData): string {
-    const alertsHtml = data.activeAlerts.length > 0 
-      ? data.activeAlerts.map(alert => `
+    const alertsHtml = data.activeAlerts && data.activeAlerts.length > 0 
+      ? (data.activeAlerts || []).map(alert => `
           <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 16px; border-radius: 6px; margin: 10px 0;">
             <h4 style="color: #dc2626; margin: 0 0 8px 0;">${alert.type.toUpperCase()}</h4>
-            <p style="margin: 4px 0;"><strong>Time:</strong> ${new Date(alert.time).toLocaleString()}</p>
+            <p style="margin: 4px 0;"><strong>Time:</strong> ${new Date(alert.time || new Date()).toLocaleString()}</p>
             <p style="margin: 4px 0;"><strong>Location:</strong> ${alert.location}</p>
             <p style="margin: 4px 0;"><strong>Status:</strong> ${alert.status}</p>
           </div>
         `).join('')
       : '<p style="color: #059669; font-weight: bold;">No active alerts - You are safe!</p>';
 
-    const contactsHtml = data.emergencyContacts.map(contact => 
+    const contactsHtml = (data.emergencyContacts || []).map(contact => 
       `<div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin: 8px 0; border: 1px solid #e2e8f0;">
         <strong>${contact.name}</strong><br>
         <span style="color: #3b82f6;">${contact.phone}</span>
@@ -470,7 +471,7 @@ export class EmailNotificationService implements EmailService {
           </div>
           <div class="content">
             <h2>Dear ${data.touristName},</h2>
-            <p>Here's your daily safety summary for ${new Date(data.date).toLocaleDateString()}.</p>
+            <p>Here's your daily safety summary for ${new Date(data.date || new Date()).toLocaleDateString()}.</p>
             
             <div class="summary-box">
               <div class="summary-item">
@@ -478,11 +479,11 @@ export class EmailNotificationService implements EmailService {
                 <div>Location Updates</div>
               </div>
               <div class="summary-item">
-                <div class="summary-number">${data.activeAlerts.length}</div>
+                <div class="summary-number">${data.activeAlerts ? data.activeAlerts.length : 0}</div>
                 <div>Active Alerts</div>
               </div>
               <div class="summary-item">
-                <div class="summary-number">${data.emergencyContacts.length}</div>
+                <div class="summary-number">${data.emergencyContacts ? data.emergencyContacts.length : 0}</div>
                 <div>Emergency Contacts</div>
               </div>
             </div>
