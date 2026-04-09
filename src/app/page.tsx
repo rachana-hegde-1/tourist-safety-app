@@ -53,15 +53,14 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/sign-up"
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Users className="mr-2 h-5 w-5" />
                 I am a Tourist
-                <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
               </Link>
               <Link
                 href="/admin/sign-in"
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                className="inline-flex items-center px-8 py-4 text-lg font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600 transition-colors"
               >
                 <Shield className="mr-2 h-5 w-5" />
                 Police / Admin Login
