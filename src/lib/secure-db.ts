@@ -1,11 +1,56 @@
+import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from './supabase';
 
 // Row Level Security: Tourists can only see their own data
-export function createSecureSupabaseClient() {
-  // Return the full admin client for now
-  // In production, you would implement proper RLS policies in Supabase
+export function createSecureSupabaseClient(userId?: string) {
+  // For user-specific operations, use client with RLS
+  if (userId) {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+        },
+        db: {
+          schema: 'public',
+        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+  }
+  
+  // For admin operations, use admin client
   return createSupabaseAdminClient();
 };
+
+// Helper function to create user-specific client with RLS
+export function createUserSupabaseClient(userId: string) {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'X-User-ID': userId,
+        },
+      },
+      db: {
+        schema: 'public',
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+}
 
 // Helper function to check if user is admin
 export function isAdminUser(userId: string): boolean {
