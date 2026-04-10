@@ -1,7 +1,37 @@
+"use client";
+
 import Link from "next/link";
 import { Shield, MapPin, Users, AlertTriangle, Smartphone, Globe } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isSignedIn && isLoaded) {
+      router.push("/dashboard");
+    }
+  }, [isSignedIn, isLoaded, router]);
+
+  // Show loading state while checking authentication
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is signed in, don't render the homepage (redirect will happen)
+  if (isSignedIn) {
+    return null;
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Navigation */}
