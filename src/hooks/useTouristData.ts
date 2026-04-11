@@ -3,7 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface TouristData {
   tourist_id: string;
@@ -45,7 +45,7 @@ export function useTouristData() {
           return;
         }
 
-        const supabase = createSupabaseAdminClient();
+        const supabase = createSupabaseBrowserClient();
         const { data: tourist, error } = await supabase
           .from("tourists")
           .select("*")
@@ -61,6 +61,7 @@ export function useTouristData() {
 
         if (!tourist) {
           // Tourist hasn't completed onboarding
+          setIsLoading(false);
           router.push("/onboarding");
           return;
         }
