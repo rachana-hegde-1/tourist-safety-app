@@ -24,175 +24,127 @@ function required(formData: FormData, key: string) {
 }
 
 export async function submitOnboarding(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("You must be signed in to complete onboarding.");
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("You must be signed in to complete onboarding.");
 
-  const fullName = required(formData, "fullName");
-  const phoneNumber = required(formData, "phoneNumber");
-  const idType = required(formData, "idType");
-  const idNumber = required(formData, "idNumber");
+    const fullName = required(formData, "fullName");
+    const phoneNumber = required(formData, "phoneNumber");
+    const idType = required(formData, "idType");
+    const idNumber = required(formData, "idNumber");
 
-  const destination = required(formData, "destination");
-  const tripStartDate = required(formData, "tripStartDate");
-  const tripEndDate = required(formData, "tripEndDate");
-  const preferredLanguage = required(formData, "preferredLanguage");
+    const destination = required(formData, "destination");
+    const tripStartDate = required(formData, "tripStartDate");
+    const tripEndDate = required(formData, "tripEndDate");
+    const preferredLanguage = required(formData, "preferredLanguage");
 
-  const emergencyContactsRaw = required(formData, "emergencyContacts");
-  const emergencyContacts = JSON.parse(
-    emergencyContactsRaw,
-  ) as EmergencyContactInput[];
+    const emergencyContactsRaw = required(formData, "emergencyContacts");
+    const emergencyContacts = JSON.parse(
+      emergencyContactsRaw,
+    ) as EmergencyContactInput[];
 
-  if (!Array.isArray(emergencyContacts) || emergencyContacts.length < 1) {
-    throw new Error("At least 1 emergency contact is required.");
-  }
-  if (emergencyContacts.length > 3) {
-    throw new Error("You can add up to 3 emergency contacts.");
-  }
+    if (!Array.isArray(emergencyContacts) || emergencyContacts.length < 1) {
+      throw new Error("At least 1 emergency contact is required.");
+    }
+    if (emergencyContacts.length > 3) {
+      throw new Error("You can add up to 3 emergency contacts.");
+    }
 
-  const deviceIdRaw = formData.get("deviceId");
-  const deviceId =
-    typeof deviceIdRaw === "string" ? deviceIdRaw.trim() : undefined;
+    const deviceIdRaw = formData.get("deviceId");
+    const deviceId =
+      typeof deviceIdRaw === "string" ? deviceIdRaw.trim() : undefined;
 
-  const supabase = createSupabaseAdminClient();
+    const supabase = createSupabaseAdminClient();
 
-  let photoPath: string | null = null;
-  let photoUrl: string | null = null;
+    // Get email from form data or use empty string
+    const emailFromForm = formData.get("email");
+    const email = typeof emailFromForm === "string" ? emailFromForm.trim() : "";
 
-  const photo = formData.get("photo");
-  if (photo instanceof File && photo.size > 0) {
-    const ext = photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    photoPath = `${userId}/${crypto.randomUUID()}.${ext}`;
+    // Optional wearable linking - only update wearables table, don't add to tourists
+    if (deviceId) {
+      const { data: wearable, error: wearableError } = await supabase
+        .from("wearables")
+        .select("device_id, linked_user_id")
+        .eq("device_id", deviceId)
+        .maybeSingle();
 
-    const bytes = await photo.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+      if (wearableError) {
+        throw new Error("Wearable verification failed.");
+      }
+      if (!wearable) {
+        throw new Error("Wearable device ID not found.");
+      }
+      if (wearable.linked_user_id) {
+        throw new Error("Wearable device is already linked.");
+      }
 
-    const upload = await supabase.storage
-      .from("tourist-photos")
-      .upload(photoPath, buffer, {
-        contentType: photo.type || "application/octet-stream",
-        upsert: true,
+      const { error: linkError } = await supabase
+        .from("wearables")
+        .update({ linked_user_id: userId })
+        .eq("device_id", deviceId);
+
+      if (linkError) {
+        throw new Error("Failed to link wearable device.");
+      }
+    }
+
+    // Insert tourist with exact required columns only
+    const { error: upsertError } = await supabase.from("tourists").upsert(
+      {
+        clerk_user_id: userId,
+        full_name: fullName,
+        phone: phoneNumber,
+        email: email,
+        id_type: idType,
+        id_number: idNumber,
+        trip_start: tripStartDate,
+        trip_end: tripEndDate,
+        destination,
+        onboarding_completed: true,
+      },
+      { onConflict: "clerk_user_id" },
+    );
+
+    if (upsertError) {
+      console.error("[Onboarding] Supabase insert error:", {
+        message: upsertError.message,
+        details: upsertError.details,
+        hint: upsertError.hint,
+        code: upsertError.code,
       });
-
-    if (upload.error) {
-      throw new Error(`Photo upload failed: ${upload.error.message}`);
+      throw new Error(`Failed to save onboarding: ${upsertError.message}`);
     }
 
-    const publicUrl = supabase.storage
-      .from("tourist-photos")
-      .getPublicUrl(photoPath).data.publicUrl;
+    const { error: deleteError } = await supabase
+      .from("emergency_contacts")
+      .delete()
+      .eq("clerk_user_id", userId);
 
-    photoUrl = publicUrl ?? null;
+    if (deleteError) {
+      console.error("[Onboarding] Delete emergency contacts error:", deleteError);
+      throw new Error("Failed to update emergency contacts.");
+    }
+
+    const { error: insertError } = await supabase.from("emergency_contacts").insert(
+      emergencyContacts.map((c) => ({
+        clerk_user_id: userId,
+        name: c.name,
+        phone_number: c.phone,
+        relationship: c.relationship,
+      })),
+    );
+
+    if (insertError) {
+      console.error("[Onboarding] Insert emergency contacts error:", insertError);
+      throw new Error("Failed to save emergency contacts.");
+    }
+
+    console.log("[Onboarding] Successfully completed for user:", userId);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error during onboarding";
+    console.error("[Onboarding] Error:", errorMessage, error);
+    throw error;
   }
-
-  // Generate tourist_id first
-  const touristId = crypto.randomUUID();
-  
-  // Generate digital ID hash using the specified format
-  const hashInput = JSON.stringify({
-    tourist_id: touristId,
-    full_name: fullName,
-    id_number: idNumber,
-    trip_start: tripStartDate,
-    trip_end: tripEndDate
-  });
-  const digitalIdHash = sha256Hex(hashInput);
-
-  // Generate QR code with tourist information
-  const qrData = JSON.stringify({
-    tourist_id: touristId,
-    full_name: fullName,
-    digital_id_hash: digitalIdHash,
-    trip_start: tripStartDate,
-    trip_end: tripEndDate,
-    emergency_contact_phone: emergencyContacts[0]?.phone || ""
-  });
-  
-  const qrCodeBase64 = await QRCode.toDataURL(qrData, {
-    width: 200,
-    margin: 1,
-    color: {
-      dark: "#000000",
-      light: "#FFFFFF"
-    }
-  });
-
-  // Optional wearable linking
-  if (deviceId) {
-    const { data: wearable, error: wearableError } = await supabase
-      .from("wearables")
-      .select("device_id, linked_user_id")
-      .eq("device_id", deviceId)
-      .maybeSingle();
-
-    if (wearableError) {
-      throw new Error("Wearable verification failed.");
-    }
-    if (!wearable) {
-      throw new Error("Wearable device ID not found.");
-    }
-    if (wearable.linked_user_id) {
-      throw new Error("Wearable device is already linked.");
-    }
-
-    const { error: linkError } = await supabase
-      .from("wearables")
-      .update({ linked_user_id: userId })
-      .eq("device_id", deviceId);
-
-    if (linkError) {
-      throw new Error("Failed to link wearable device.");
-    }
-  }
-
-  const { error: upsertError } = await supabase.from("tourists").upsert(
-    {
-      clerk_user_id: userId,
-      tourist_id: touristId,
-      full_name: fullName,
-      phone_number: phoneNumber,
-      id_type: idType,
-      id_number: idNumber,
-      photo_path: photoPath,
-      photo_url: photoUrl,
-      destination,
-      trip_start_date: tripStartDate,
-      trip_end_date: tripEndDate,
-      preferred_language: preferredLanguage,
-      device_id: deviceId ?? null,
-      digital_id_hash: digitalIdHash,
-      digital_id_qr: qrCodeBase64,
-      onboarding_completed: true,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "clerk_user_id" },
-  );
-
-  if (upsertError) {
-    throw new Error(`Failed to save onboarding: ${upsertError.message}`);
-  }
-
-  const { error: deleteError } = await supabase
-    .from("emergency_contacts")
-    .delete()
-    .eq("clerk_user_id", userId);
-
-  if (deleteError) {
-    throw new Error("Failed to update emergency contacts.");
-  }
-
-  const { error: insertError } = await supabase.from("emergency_contacts").insert(
-    emergencyContacts.map((c) => ({
-      clerk_user_id: userId,
-      name: c.name,
-      phone_number: c.phone,
-      relationship: c.relationship,
-    })),
-  );
-
-  if (insertError) {
-    throw new Error("Failed to save emergency contacts.");
-  }
-
-  return { success: true };
 }
 

@@ -265,7 +265,6 @@ export default function OnboardingPage() {
     fd.set("emergencyContacts", JSON.stringify(contacts));
 
     if (deviceId.trim()) fd.set("deviceId", deviceId.trim());
-    if (photoFile) fd.set("photo", photoFile);
 
     startSubmit(async () => {
       try {
