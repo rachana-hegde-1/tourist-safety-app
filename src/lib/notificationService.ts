@@ -68,16 +68,18 @@ export const notificationService: NotificationService = {
 
     // Send SMS notifications
     if (tourist.smsNotifications && emergencyContacts.length > 0) {
-      for (const contact of emergencyContacts) {
-        if (contact.phone) {
-          await smsService.sendAlertSMS({
-            touristName: tourist.full_name,
-            alertType,
-            location,
-            trackingLink
-          });
-        }
-      }
+      await smsService.sendAlertSMS({
+        touristId: tourist.id,
+        touristName: tourist.full_name,
+        alertType,
+        location,
+        trackingLink,
+        emergencyContacts: emergencyContacts.filter((contact) => contact.phone).map((contact) => ({ 
+          name: contact.name, 
+          phone_number: contact.phone || '', 
+          email: contact.email 
+        }))
+      });
     }
 
     // Send push notifications

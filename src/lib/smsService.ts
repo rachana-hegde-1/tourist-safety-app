@@ -1,5 +1,9 @@
 // Simulated SMS service for development/testing
+import { createSupabaseAdminClient } from "./supabase";
+
 interface SMSAlertData {
+  alertId?: string;
+  touristId?: string;
   touristName: string;
   alertType: string;
   location: string;
@@ -37,11 +41,33 @@ export const smsService: SMSService = {
   },
 
   async sendAlertSMS(alertData: SMSAlertData): Promise<void> {
-    const { touristName, alertType, location, trackingLink } = alertData;
-    
+    const { alertId, touristId, touristName, alertType, location, trackingLink, emergencyContacts } = alertData;
+
     const message = `🚨 TOURIST SAFETY ALERT\n\nTourist: ${touristName}\nAlert: ${alertType}\nLocation: ${location}\nTrack: ${trackingLink}`;
-    
-    await this.sendSMS('+1234567890', message); // Simulated emergency contact
+
+    // Log simulated SMS to database for each emergency contact
+    if (emergencyContacts && emergencyContacts.length > 0) {
+      const supabase = createSupabaseAdminClient();
+
+      for (const contact of emergencyContacts) {
+        if (contact.phone_number && contact.name) {
+          await supabase
+            .from("sms_logs")
+            .insert({
+              alert_id: alertId,
+              tourist_id: touristId || 'unknown',
+              recipient_name: contact.name,
+              recipient_phone: contact.phone_number,
+              message: message
+            });
+
+          console.log(`📱 SMS Simulation: Logged SMS to ${contact.name} (${contact.phone_number}): "${message}"`);
+        }
+      }
+    } else {
+      // Fallback for backward compatibility
+      await this.sendSMS('+1234567890', message);
+    }
   },
 
   async getAccountBalance(): Promise<string> {

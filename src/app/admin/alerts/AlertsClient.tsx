@@ -6,25 +6,29 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-type AlertRow = {
-  id: number;
-  clerk_user_id: string;
-  type: string;
-  message: string | null;
-  status: string;
-  latitude: number;
-  longitude: number;
+type SMSLog = {
+  id: string;
+  alert_id: string;
+  tourist_id: string;
+  recipient_name: string;
+  recipient_phone: string;
+  message: string;
+  sent_at: string;
   created_at: string;
-  tourist_name: string;
-  tourist_photo: string | null;
 };
 
 export function AlertsClient() {
   const router = useRouter();
   const [alerts, setAlerts] = React.useState<AlertRow[]>([]);
   const [query, setQuery] = React.useState("");
+  const [selectedAlert, setSelectedAlert] = React.useState<AlertRow | null>(null);
+  const [smsLogs, setSmsLogs] = React.useState<SMSLog[]>([]);
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
   const prevPanicCountRef = React.useRef(0);
 
   const load = React.useCallback(async () => {
@@ -61,6 +65,27 @@ export function AlertsClient() {
     if (!res.ok || !json.ok) return toast.error("Failed to mark resolved.");
     toast.success("Marked resolved.");
     await load();
+  }
+
+  async function viewAlertDetails(alert: AlertRow) {
+    setSelectedAlert(alert);
+    setIsDetailModalOpen(true);
+
+    // Load SMS logs for PANIC alerts
+    if (alert.type === "PANIC") {
+      try {
+        const res = await fetch(`/api/admin/alerts/${alert.id}/sms-logs`);
+        const json = (await res.json()) as { ok: boolean; smsLogs?: SMSLog[] };
+        if (res.ok && json.ok) {
+          setSmsLogs(json.smsLogs ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to load SMS logs:", error);
+        setSmsLogs([]);
+      }
+    } else {
+      setSmsLogs([]);
+    }
   }
 
   function generateEFir(id: number) {
@@ -141,6 +166,11 @@ export function AlertsClient() {
                     >
                       View on Map
                     </Button>
+                    {a.type === "PANIC" && (
+                      <Button type="button" variant="outline" onClick={() => void viewAlertDetails(a)}>
+                        View Details
+                      </Button>
+                    )}
                     {(a.type === "PANIC" || a.type === "MISSING_PERSON") && (
                       <Button type="button" onClick={() => void generateEFir(a.id)}>
                         Generate E-FIR
@@ -160,6 +190,74 @@ export function AlertsClient() {
           </tbody>
         </table>
       </div>
+
+      {/* Alert Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Alert Details - {selectedAlert?.type}</DialogTitle>
+          </DialogHeader>
+          {selectedAlert && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Tourist</Label>
+                  <p className="text-sm text-muted-foreground">{selectedAlert.tourist_name}</p>
+                </div>
+                <div>
+                  <Label>Time</Label>
+                  <p className="text-sm text-muted-foreground">{new Date(selectedAlert.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label>Location</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedAlert.latitude.toFixed(6)}, {selectedAlert.longitude.toFixed(6)}
+                  </p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Badge variant={selectedAlert.status === "RESOLVED" ? "default" : "secondary"}>
+                    {selectedAlert.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedAlert.message && (
+                <div>
+                  <Label>Message</Label>
+                  <p className="text-sm text-muted-foreground">{selectedAlert.message}</p>
+                </div>
+              )}
+
+              {smsLogs.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Notifications Sent</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {smsLogs.map((log, index) => (
+                        <div key={index} className="border rounded-lg p-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{log.recipient_name}</p>
+                              <p className="text-sm text-muted-foreground">{log.recipient_phone}</p>
+                            </div>
+                            <Badge variant="outline">SMS Sent</Badge>
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            {new Date(log.sent_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

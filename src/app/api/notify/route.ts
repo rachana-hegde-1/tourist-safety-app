@@ -11,6 +11,7 @@ interface EmergencyContact {
 }
 
 interface Tourist {
+  tourist_id: string;
   full_name: string;
   email: string;
   phone_number: string;
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
     // Channel 3: SMS Notifications (Only for PANIC alerts)
     if (alert.type === "panic" || alert.type === "sos") {
       notificationPromises.push(
-        handleSMSNotifications(alert, tourist, emergencyContacts, trackingLink)
+        handleSMSNotifications(alert, tourist, emergencyContacts, trackingLink, alertId)
           .then((result) => {
             notificationResults.sms = result;
           })
@@ -318,7 +319,8 @@ async function handleSMSNotifications(
   alert: Alert,
   tourist: Tourist,
   emergencyContacts: EmergencyContact[],
-  trackingLink: string
+  trackingLink: string,
+  alertId: string
 ) {
   try {
     // Validate SMS configuration
@@ -334,11 +336,13 @@ async function handleSMSNotifications(
     // Send SMS notifications
     if (tourist.sms_notifications && emergencyContacts.length > 0) {
       await smsService.sendAlertSMS({
+        alertId,
+        touristId: tourist.tourist_id,
         touristName: tourist.full_name,
         alertType: alert.type,
         location: `${alert.latitude}, ${alert.longitude}`,
         trackingLink,
-        emergencyContacts: emergencyContacts.filter((contact) => contact.email),
+        emergencyContacts: emergencyContacts.filter((contact) => contact.phone_number),
       });
     }
 
