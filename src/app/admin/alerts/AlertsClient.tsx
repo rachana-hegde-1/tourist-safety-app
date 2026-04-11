@@ -11,6 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+type AlertRow = {
+  id: number;
+  clerk_user_id: string;
+  type: string;
+  message: string | null;
+  status: string;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  tourist_name: string;
+  tourist_photo: string | null;
+};
+
 type SMSLog = {
   id: string;
   alert_id: string;
