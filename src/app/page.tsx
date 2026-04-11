@@ -186,7 +186,7 @@ export default function Home() {
               </h2>
               <div className="space-y-4">
                 <p className="text-lg text-gray-600">
-                  SafeTrip is India's premier tourist safety monitoring system, designed specifically for the unique challenges faced by domestic and international travelers.
+                  SafeTrip is India&apos;s premier tourist safety monitoring system, designed specifically for the unique challenges faced by domestic and international travelers.
                 </p>
                 <p className="text-lg text-gray-600">
                   Our platform combines cutting-edge technology with seamless integration to provide comprehensive protection, ensuring that help is always just a tap away.

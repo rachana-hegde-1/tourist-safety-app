@@ -5,6 +5,7 @@ import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "leaflet.heat";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +44,7 @@ export function LiveMapClient() {
     active_alerts: 0,
     unsafe_zone_breaches: 0,
   });
+  const [isSubscribed, setIsSubscribed] = React.useState(false);
   const [showHeat, setShowHeat] = React.useState(false);
 
   React.useEffect(() => {
@@ -68,14 +70,36 @@ export function LiveMapClient() {
     const json = (await res.json()) as LiveResponse;
     if (!res.ok || !json.ok) return;
     setTourists(json.tourists ?? []);
-    setStats(json.stats ?? stats);
-  }, [stats]);
+    setStats((prev) => json.stats ?? prev);
+  }, []);
 
   React.useEffect(() => {
     void load();
     const id = window.setInterval(() => void load(), 30_000);
     return () => window.clearInterval(id);
   }, [load]);
+
+  React.useEffect(() => {
+    if (isSubscribed) return;
+
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel("alerts-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "alerts" },
+        () => {
+          void load();
+        },
+      )
+      .subscribe();
+
+    setIsSubscribed(true);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isSubscribed, load]);
 
   React.useEffect(() => {
     const map = mapRef.current;

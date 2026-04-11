@@ -51,11 +51,11 @@ export function DailySafetySummaryEmail({
             <Text style={greeting}>Dear {touristName},</Text>
             
             <Text style={paragraph}>
-              Here's your daily safety summary for {new Date(date).toLocaleDateString()}. We're committed to keeping you safe during your visit to India.
+              Here&apos;s your daily safety summary for {new Date(date).toLocaleDateString()}. We&apos;re committed to keeping you safe during your visit to India.
             </Text>
 
             <Section style={summarySection}>
-              <Text style={sectionTitle}>Today's Overview</Text>
+              <Text style={sectionTitle}>Today&apos;s Overview</Text>
               
               <Row style={summaryRow}>
                 <Column style={summaryColumn}>

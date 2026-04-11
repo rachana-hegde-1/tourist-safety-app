@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true, clerk_user_id: userId }, { headers: securityHeaders });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { ok: false, reason: "invalid_json" },
       { status: 400, headers: securityHeaders }

@@ -93,7 +93,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Notification close handler (for cleanup)
-self.addEventListener('notificationclose', (event) => {
+self.addEventListener('notificationclose', () => {
   console.log('Notification closed');
 });
 

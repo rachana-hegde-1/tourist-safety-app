@@ -4,18 +4,23 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Download, Home } from "lucide-react";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 interface InstallPromptProps {
   className?: string;
 }
 
 export function InstallPrompt({ className = "" }: InstallPromptProps) {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt((e as any).prompt);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
     };
 

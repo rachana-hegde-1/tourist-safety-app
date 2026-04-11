@@ -23,21 +23,14 @@ export function useNotifications() {
     denied: false,
     default: true,
   });
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(() =>
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window
+  );
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const supabase = createSupabaseBrowserClient();
-
-  useEffect(() => {
-    // Check if notifications are supported
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setIsSupported(false);
-      return;
-    }
-
-    setIsSupported(true);
-    checkPermission();
-    registerServiceWorker();
-  }, []);
 
   const checkPermission = () => {
     if ("Notification" in window) {
@@ -66,6 +59,22 @@ export function useNotifications() {
       }
     }
   };
+
+  useEffect(() => {
+    if (!isSupported) {
+      return;
+    }
+
+    (async () => {
+      const permission = await Notification.requestPermission();
+      setPermission({
+        granted: permission === 'granted',
+        denied: permission === 'denied',
+        default: permission === 'default',
+      });
+      await registerServiceWorker();
+    })();
+  }, [isSupported]);
 
   const requestPermission = async (): Promise<boolean> => {
     if (!isSupported) {
@@ -235,6 +244,24 @@ export function useRealtimeNotifications() {
   const { showLocalNotification } = useNotifications();
   const supabase = createSupabaseBrowserClient();
 
+  const getAlertMessage = (type: string, message?: string) => {
+    const messages = {
+      sos: "Emergency alert triggered! Help is on the way.",
+      fall: "Fall detected! Are you okay?",
+      low_battery: "Your device battery is critically low.",
+      geo_fence: "You have left the safe zone.",
+      panic: "Panic button pressed! Emergency services notified.",
+    };
+
+    return message || messages[type as keyof typeof messages] || "New alert received.";
+  };
+
+  const showInAppNotification = (alert: unknown) => {
+    // This would integrate with your in-app notification system
+    // For example, using react-hot-toast or similar
+    console.log("In-app notification:", alert);
+  };
+
   useEffect(() => {
     // Subscribe to alerts for the current user
     const channel = supabase
@@ -247,7 +274,7 @@ export function useRealtimeNotifications() {
           table: "alerts",
           filter: "user_id=eq.current_user",
         },
-        (payload: any) => {
+        (payload: { new: { type: string; id?: string; message?: string } }) => {
           const alert = payload.new;
           
           // Show browser notification
@@ -267,23 +294,5 @@ export function useRealtimeNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [showLocalNotification]);
-
-  const getAlertMessage = (type: string, message?: string) => {
-    const messages = {
-      sos: "Emergency alert triggered! Help is on the way.",
-      fall: "Fall detected! Are you okay?",
-      low_battery: "Your device battery is critically low.",
-      geo_fence: "You have left the safe zone.",
-      panic: "Panic button pressed! Emergency services notified.",
-    };
-
-    return message || messages[type as keyof typeof messages] || "New alert received.";
-  };
-
-  const showInAppNotification = (alert: any) => {
-    // This would integrate with your in-app notification system
-    // For example, using react-hot-toast or similar
-    console.log("In-app notification:", alert);
-  };
+  }, [showLocalNotification, supabase]);
 }

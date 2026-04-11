@@ -35,7 +35,7 @@ export function WelcomeEmail({ touristName, digitalIdUrl, tripStartDate, tripEnd
             <Text style={greeting}>Dear {touristName},</Text>
             
             <Text style={paragraph}>
-              Welcome to the Tourist Safety System! We're delighted to have you visit India. Your registration has been successfully completed, and your Digital Tourist ID is now ready.
+              Welcome to the Tourist Safety System! We&apos;re delighted to have you visit India. Your registration has been successfully completed, and your Digital Tourist ID is now ready.
             </Text>
 
             <Text style={paragraph}>

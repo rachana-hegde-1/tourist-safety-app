@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { EFIRModal } from "./EFIRModal";
 
 type AlertRow = {
   id: number;
@@ -22,11 +22,10 @@ type AlertRow = {
 };
 
 export function AlertsClient() {
+  const router = useRouter();
   const [alerts, setAlerts] = React.useState<AlertRow[]>([]);
   const [query, setQuery] = React.useState("");
   const prevPanicCountRef = React.useRef(0);
-  const [efirOpen, setEfirOpen] = React.useState(false);
-  const [efirAlertId, setEfirAlertId] = React.useState<number | null>(null);
 
   const load = React.useCallback(async () => {
     const res = await fetch("/api/admin/alerts", { cache: "no-store" });
@@ -65,8 +64,7 @@ export function AlertsClient() {
   }
 
   function generateEFir(id: number) {
-    setEfirAlertId(id);
-    setEfirOpen(true);
+    router.push(`/admin/efir/${id}`);
   }
 
   const rows = alerts.filter((a) =>
@@ -163,14 +161,6 @@ export function AlertsClient() {
         </table>
       </div>
 
-      <EFIRModal
-        open={efirOpen}
-        onOpenChange={(open) => {
-          setEfirOpen(open);
-          if (!open) setEfirAlertId(null);
-        }}
-        alertId={efirAlertId}
-      />
     </div>
   );
 }

@@ -1,54 +1,54 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+"use client";
+
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardClient } from "./DashboardClient";
+import { useTouristData } from "@/hooks/useTouristData";
+import { AlertTriangle } from "lucide-react";
 
-type TouristRow = {
-  full_name: string | null;
-  safety_score: number | null;
-  device_id: string | null;
-};
+export default function DashboardPage() {
+  const { touristData, isLoading, error } = useTouristData();
 
-type AlertRow = {
-  id: string;
-  type: string;
-  created_at: string;
-  latitude: number | undefined;
-  longitude: number | undefined;
-};
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <div className="h-[420px] bg-gray-200 rounded animate-pulse" />
+            <div className="space-y-6">
+              <div className="h-28 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-28 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-export default async function DashboardPage() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (error || !touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-6xl mx-auto py-12 text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900">Unable to load your dashboard</h2>
+          <p className="mt-2 text-gray-600">{error || "We could not find your tourist profile. Redirecting you to onboarding..."}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-  const supabase = createSupabaseAdminClient();
-
-  const { data: touristData } = await supabase
-    .from("tourists")
-    .select("full_name, safety_score, device_id")
-    .eq("clerk_user_id", userId)
-    .maybeSingle();
-
-  const { data: alertsData } = await supabase
-    .from("alerts")
-    .select("id,type,created_at,latitude,longitude")
-    .eq("clerk_user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const tourist = touristData as unknown as TouristRow | null;
-  const alerts = (alertsData ?? []) as unknown as AlertRow[];
-
-  const touristName = tourist?.full_name ?? "Tourist";
-  const safetyScore = typeof tourist?.safety_score === "number" ? tourist.safety_score : 80;
-  const wearableConnected = Boolean(tourist?.device_id);
+  const touristName = touristData.full_name ?? "Tourist";
+  const safetyScore = typeof touristData.safety_score === "number" ? touristData.safety_score : 80;
+  const wearableConnected = Boolean(touristData.device_id);
+  const wearableDeviceId = touristData.device_id ?? null;
 
   return (
     <DashboardClient
       touristName={touristName}
       safetyScore={safetyScore}
       wearableConnected={wearableConnected}
-      initialAlerts={alerts}
+      wearableDeviceId={wearableDeviceId}
+      initialAlerts={[]}
     />
   );
 }

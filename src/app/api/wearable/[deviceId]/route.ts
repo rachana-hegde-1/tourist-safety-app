@@ -112,12 +112,14 @@ export async function POST(
     const { error: locationError } = await supabase
       .from("locations")
       .insert({
+        clerk_user_id: wearable.linked_user_id,
         user_id: wearable.linked_user_id,
         latitude,
         longitude,
         timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         source: "wearable",
-        device_id: deviceId
+        device_id: deviceId,
       });
 
     if (locationError) {

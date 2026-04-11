@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
 
@@ -20,14 +19,12 @@ const languages = [
 ];
 
 export function LanguageSelector() {
-  const { t } = useTranslation();
-  const [currentLang, setCurrentLang] = useState("en");
+  const [currentLang, setCurrentLang] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("tourist-safety-language") || "en"
+      : "en"
+  );
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("tourist-safety-language") || "en";
-    setCurrentLang(savedLanguage);
-  }, []);
 
   const handleLanguageChange = (languageCode: string) => {
     setCurrentLang(languageCode);
@@ -37,8 +34,6 @@ export function LanguageSelector() {
     // Reload to apply new language
     window.location.reload();
   };
-
-  const currentLanguage = languages.find(lang => lang.code === currentLang);
 
   return (
     <div className="relative">

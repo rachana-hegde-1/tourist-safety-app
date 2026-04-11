@@ -1,7 +1,6 @@
 "use server";
 
 import crypto from "node:crypto";
-import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import QRCode from "qrcode";
@@ -26,7 +25,7 @@ function required(formData: FormData, key: string) {
 
 export async function submitOnboarding(formData: FormData) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (!userId) throw new Error("You must be signed in to complete onboarding.");
 
   const fullName = required(formData, "fullName");
   const phoneNumber = required(formData, "phoneNumber");
@@ -194,6 +193,6 @@ export async function submitOnboarding(formData: FormData) {
     throw new Error("Failed to save emergency contacts.");
   }
 
-  redirect("/dashboard");
+  return { success: true };
 }
 

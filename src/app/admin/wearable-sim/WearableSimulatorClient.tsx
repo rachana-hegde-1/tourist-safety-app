@@ -13,7 +13,7 @@ interface LogEntry {
   timestamp: string;
   type: "success" | "error" | "info";
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export function WearableSimulatorClient() {
@@ -28,7 +28,7 @@ export function WearableSimulatorClient() {
   const autoPingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  const addLog = (type: LogEntry["type"], message: string, data?: any) => {
+  const addLog = (type: LogEntry["type"], message: string, data?: Record<string, unknown>) => {
     const newLog: LogEntry = {
       id: Date.now().toString(),
       timestamp: new Date().toLocaleTimeString(),

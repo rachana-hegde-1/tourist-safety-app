@@ -1,5 +1,16 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import enCommon from '../../public/locales/en/common.json';
+import hiCommon from '../../public/locales/hi/common.json';
+import bnCommon from '../../public/locales/bn/common.json';
+import taCommon from '../../public/locales/ta/common.json';
+import teCommon from '../../public/locales/te/common.json';
+import knCommon from '../../public/locales/kn/common.json';
+import mlCommon from '../../public/locales/ml/common.json';
+import mrCommon from '../../public/locales/mr/common.json';
+import guCommon from '../../public/locales/gu/common.json';
+import orCommon from '../../public/locales/or/common.json';
+import asCommon from '../../public/locales/as/common.json';
 
 interface Language {
   name: string;
@@ -38,17 +49,17 @@ export const initI18n = async () => {
       escapeValue: false,
     },
     resources: {
-      en: { common: require('../../public/locales/en/common.json') },
-      hi: { common: require('../../public/locales/hi/common.json') },
-      bn: { common: require('../../public/locales/bn/common.json') },
-      ta: { common: require('../../public/locales/ta/common.json') },
-      te: { common: require('../../public/locales/te/common.json') },
-      kn: { common: require('../../public/locales/kn/common.json') },
-      ml: { common: require('../../public/locales/ml/common.json') },
-      mr: { common: require('../../public/locales/mr/common.json') },
-      gu: { common: require('../../public/locales/gu/common.json') },
-      or: { common: require('../../public/locales/or/common.json') },
-      as: { common: require('../../public/locales/as/common.json') }
+      en: { common: enCommon },
+      hi: { common: hiCommon },
+      bn: { common: bnCommon },
+      ta: { common: taCommon },
+      te: { common: teCommon },
+      kn: { common: knCommon },
+      ml: { common: mlCommon },
+      mr: { common: mrCommon },
+      gu: { common: guCommon },
+      or: { common: orCommon },
+      as: { common: asCommon }
     },
     
     detection: {

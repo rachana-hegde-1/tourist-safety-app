@@ -38,8 +38,8 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
 }
 
 // Function to translate all keys in an object recursively
-async function translateObject(obj: any, targetLanguage: string): Promise<any> {
-  const result: any = {};
+async function translateObject(obj: Record<string, unknown>, targetLanguage: string): Promise<Record<string, unknown>> {
+  const result: Record<string, unknown> = {};
   
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
@@ -50,7 +50,7 @@ async function translateObject(obj: any, targetLanguage: string): Promise<any> {
         result[key] = await translateText(value, targetLanguage);
       }
     } else if (typeof value === 'object' && value !== null) {
-      result[key] = await translateObject(value, targetLanguage);
+      result[key] = await translateObject(value as Record<string, unknown>, targetLanguage);
     } else {
       result[key] = value;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -43,11 +43,7 @@ export function NotificationSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
-  useEffect(() => {
-    loadNotificationSettings();
-  }, []);
-
-  const loadNotificationSettings = async () => {
+  const loadNotificationSettings = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,7 +69,11 @@ export function NotificationSettings() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase, settings.preferences]);
+
+  useEffect(() => {
+    loadNotificationSettings();
+  }, [loadNotificationSettings]);
 
   const saveNotificationSettings = async () => {
     setIsSaving(true);

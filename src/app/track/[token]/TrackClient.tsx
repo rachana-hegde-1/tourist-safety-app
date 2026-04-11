@@ -27,7 +27,7 @@ export function TrackClient({ token }: { token: string }) {
   const [touristName, setTouristName] = React.useState("Tourist");
   const [shareUrl, setShareUrl] = React.useState("");
   const [lastLoc, setLastLoc] = React.useState<TrackResponse["location"]>(null);
-  const [isExpired, setIsExpired] = React.useState(false);
+  const [trackingStatus, setTrackingStatus] = React.useState<"ok" | "expired" | "invalid">("ok");
 
   React.useEffect(() => {
     setShareUrl(window.location.href);
@@ -69,15 +69,21 @@ export function TrackClient({ token }: { token: string }) {
   }, []);
 
   const fetchLocation = React.useCallback(async () => {
+    if (trackingStatus !== "ok") return;
     try {
       const res = await fetch(`/api/track/${encodeURIComponent(token)}/location`, {
         cache: "no-store",
       });
       const json = (await res.json()) as TrackResponse;
       if (!res.ok || !json.ok) {
-        if (json.reason === "link_expired") setIsExpired(true);
+        if (json.reason === "link_expired") {
+          setTrackingStatus("expired");
+        } else if (json.reason === "invalid_token") {
+          setTrackingStatus("invalid");
+        }
         return;
       }
+      setTrackingStatus("ok");
       setTouristName(json.tourist_name ?? "Tourist");
       setLastLoc(json.location ?? null);
       if (json.location) {
@@ -86,7 +92,9 @@ export function TrackClient({ token }: { token: string }) {
     } catch {
       // ignore poll failures
     }
-  }, [token, updateMap]);
+  }, [token, updateMap, trackingStatus]);
+
+  const isExpired = trackingStatus === "expired";
 
   React.useEffect(() => {
     void fetchLocation();
@@ -95,6 +103,30 @@ export function TrackClient({ token }: { token: string }) {
     }, 20_000);
     return () => window.clearInterval(id);
   }, [fetchLocation]);
+
+  if (trackingStatus !== "ok") {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black">
+        <div className="mx-auto max-w-3xl px-6 py-20">
+          <div className="rounded-3xl border border-slate-200 bg-white p-10 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <div className="space-y-4 text-center">
+              <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+                {trackingStatus === "expired"
+                  ? "This tracking link has expired"
+                  : "Invalid tracking link"}
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {trackingStatus === "expired"
+                  ? "The tracking link you opened is no longer active. Please ask the tourist to generate a new link."
+                  : "The tracking link is invalid. Please verify the link or request a new one from the tourist."
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   function whatsappShare() {
     if (!shareUrl) return;

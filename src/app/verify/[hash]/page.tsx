@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import { VerificationClient } from "./VerificationClient";
@@ -44,8 +45,6 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
   }
 
   // Verify the hash integrity by recalculating it
-  const crypto = require("crypto");
-  
   function sha256Hex(input: string) {
     return crypto.createHash("sha256").update(input, "utf8").digest("hex");
   }

@@ -3,8 +3,11 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
 import { submitOnboarding } from "./actions";
+import { createSupabaseAdminClient } from "@/lib/supabase";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,24 +61,21 @@ function onlyDigitsPhone(value: string) {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { isSignedIn, isLoaded, user } = useUser();
+  const userId = user?.id;
   const [step, setStep] = React.useState<"1" | "2" | "3" | "4">("1");
   const [isSubmitting, startSubmit] = React.useTransition();
-
-  // Step 1
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [fullName, setFullName] = React.useState("");
   const [phoneNumber, setPhoneNumber] = React.useState("");
   const [idType, setIdType] = React.useState<"Aadhaar" | "Passport" | "">("");
   const [idNumber, setIdNumber] = React.useState("");
   const [photoFile, setPhotoFile] = React.useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = React.useState<string | null>(null);
-
-  // Step 2
   const [destination, setDestination] = React.useState("");
   const [tripStartDate, setTripStartDate] = React.useState("");
   const [tripEndDate, setTripEndDate] = React.useState("");
   const [preferredLanguage, setPreferredLanguage] = React.useState<(typeof LANGUAGES)[number] | "">("");
-
-  // Step 3
   const [contacts, setContacts] = React.useState<EmergencyContact[]>([]);
   const [contactDraft, setContactDraft] = React.useState<EmergencyContact>({
     name: "",
@@ -83,13 +83,46 @@ export default function OnboardingPage() {
     relationship: "",
   });
   const [isContactDialogOpen, setIsContactDialogOpen] = React.useState(false);
-
-  // Step 4
   const [deviceId, setDeviceId] = React.useState("");
-  const [wearableStatus, setWearableStatus] = React.useState<
-    "idle" | "checking" | "available" | "unavailable"
-  >("idle");
+  const [wearableStatus, setWearableStatus] = React.useState<"idle" | "checking" | "available" | "unavailable">("idle");
   const [wearableReason, setWearableReason] = React.useState<string | null>(null);
+
+  // Check if user has already completed onboarding
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !userId) {
+      return;
+    }
+
+    const checkOnboardingStatus = async () => {
+      try {
+        const supabase = createSupabaseAdminClient();
+        const { data: tourist, error } = await supabase
+          .from("tourists")
+          .select("onboarding_completed")
+          .eq("clerk_user_id", userId)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking onboarding status:", error);
+          setIsCheckingOnboarding(false);
+          return;
+        }
+
+        // If onboarding is completed, redirect to dashboard
+        if (tourist?.onboarding_completed) {
+          router.push("/dashboard");
+          return;
+        }
+
+        setIsCheckingOnboarding(false);
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+        setIsCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [isLoaded, isSignedIn, userId, router]);
 
   React.useEffect(() => {
     if (!photoFile) {
@@ -100,6 +133,26 @@ export default function OnboardingPage() {
     setPhotoPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [photoFile]);
+
+  // Show loading state while checking onboarding status
+  if (!isLoaded || isCheckingOnboarding) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking onboarding status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not signed in, redirect to sign-in
+  if (!isSignedIn) {
+    router.push("/sign-in");
+    return null;
+  }
+
+  // Step 1
 
   function goNext() {
     if (step === "1") {
@@ -217,6 +270,7 @@ export default function OnboardingPage() {
     startSubmit(async () => {
       try {
         await submitOnboarding(fd);
+        router.push("/dashboard");
       } catch (e) {
         const message = e instanceof Error ? e.message : "Failed to submit onboarding.";
         toast.error(message);

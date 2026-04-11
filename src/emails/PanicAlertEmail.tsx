@@ -1,4 +1,4 @@
-import { Body, Button, Container, Head, Html, Img, Preview, Section, Text, Row, Column, Font } from "@react-email/components";
+import { Body, Button, Container, Head, Html, Preview, Section, Text, Row, Column, Font } from "@react-email/components";
 
 interface PanicAlertEmailProps {
   touristName: string;
@@ -97,7 +97,7 @@ export function PanicAlertEmail({
                   </Column>
                   <Column>
                     <Text style={actionText}>
-                      <strong>Track Location:</strong> Click the button below to track {touristName}'s real-time location
+                      <strong>Track Location:</strong> Click the button below to track {touristName}&apos;s real-time location
                     </Text>
                   </Column>
                 </Row>
@@ -108,7 +108,7 @@ export function PanicAlertEmail({
                   </Column>
                   <Column>
                     <Text style={actionText}>
-                      <strong>Contact Authorities:</strong> Call emergency services if you haven't already
+                      <strong>Contact Authorities:</strong> Call emergency services if you haven&apos;t already
                     </Text>
                   </Column>
                 </Row>

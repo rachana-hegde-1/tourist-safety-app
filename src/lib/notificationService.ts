@@ -1,25 +1,49 @@
 import { smsService } from "./smsService";
-import { emailService, AlertEmailData } from "./emailService";
+import { emailService, AlertEmailData, WelcomeEmailDataType } from "./emailService";
 import { createSupabaseAdminClient } from "./supabase";
 
 interface NotificationService {
-  sendWelcomeEmail: (data: any) => Promise<void>;
-  sendAlertNotifications: (alertData: any) => Promise<void>;
-  sendDailySummary: (data: any) => Promise<void>;
+  sendWelcomeEmail: (data: WelcomeEmailDataType) => Promise<void>;
+  sendAlertNotifications: (alertData: AlertData) => Promise<void>;
+  sendDailySummary: (data: DailySummaryData) => Promise<void>;
   sendAlertEmail: (data: AlertEmailData) => Promise<void>;
 }
 
 // Type for alert data
+interface EmergencyContactInfo {
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
 interface AlertData {
-  tourist: any;
-  emergencyContacts: Array<{ email: string; phone?: string }>;
+  tourist: {
+    id: string;
+    full_name: string;
+    email: string;
+    phone_number: string;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    pushNotifications?: boolean;
+  };
+  emergencyContacts: EmergencyContactInfo[];
   alertType: string;
-  location: { latitude: number; longitude: number };
+  location: string;
   trackingLink: string;
 }
 
+interface DailySummaryData {
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  touristName: string;
+  safetyScore: number;
+  activityCount: number;
+  phone?: string;
+  email: string;
+}
+
 export const notificationService: NotificationService = {
-  async sendWelcomeEmail(data: any): Promise<void> {
+  async sendWelcomeEmail(data: WelcomeEmailDataType): Promise<void> {
     await emailService.sendWelcomeEmail(data);
   },
 
@@ -27,7 +51,7 @@ export const notificationService: NotificationService = {
     await emailService.sendAlertEmail(data);
   },
 
-  async sendAlertNotifications(alertData: any): Promise<void> {
+  async sendAlertNotifications(alertData: AlertData): Promise<void> {
     const { tourist, emergencyContacts, alertType, location, trackingLink } = alertData;
     
     // Send email notifications
@@ -38,7 +62,7 @@ export const notificationService: NotificationService = {
         alertType,
         location,
         trackingLink,
-        emergencyContacts: emergencyContacts.filter((contact: { email: string; phone?: string }) => contact.email)
+        emergencyContacts: emergencyContacts.filter((contact) => contact.email).map((contact) => ({ name: contact.name, email: contact.email!, phone: contact.phone }))
       });
     }
 
@@ -62,6 +86,11 @@ export const notificationService: NotificationService = {
       console.log("Push notification sent:", alertData);
     }
 
+    const locationString = location;
+    const [latitude, longitude] = locationString
+      .split(",")
+      .map((part) => parseFloat(part.trim()));
+
     // Store alert in database
     const supabase = createSupabaseAdminClient();
     await supabase
@@ -69,15 +98,15 @@ export const notificationService: NotificationService = {
       .insert({
         user_id: tourist.id,
         type: alertType,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude: Number.isFinite(latitude) ? latitude : 0,
+        longitude: Number.isFinite(longitude) ? longitude : 0,
         timestamp: new Date().toISOString(),
         status: "active",
-        message: `${alertType} detected - Location: ${location.latitude}, ${location.longitude}`
+        message: `${alertType} detected - Location: ${locationString}`
       });
   },
 
-  async sendDailySummary(data: any): Promise<void> {
+  async sendDailySummary(data: DailySummaryData): Promise<void> {
     // Send daily summary via email
     if (data.emailNotifications) {
       await emailService.sendDailySafetySummary(data);

@@ -1,7 +1,15 @@
 // Simulated SMS service for development/testing
+interface SMSAlertData {
+  touristName: string;
+  alertType: string;
+  location: string;
+  trackingLink: string;
+  emergencyContacts?: Array<{ name?: string; phone_number?: string; email?: string }>;
+}
+
 interface SMSService {
   sendSMS: (to: string, message: string) => Promise<{ success: boolean; message?: string }>;
-  sendAlertSMS: (alertData: any) => Promise<void>;
+  sendAlertSMS: (alertData: SMSAlertData) => Promise<void>;
   getAccountBalance: () => Promise<string>;
 }
 
@@ -28,7 +36,7 @@ export const smsService: SMSService = {
     };
   },
 
-  async sendAlertSMS(alertData: any): Promise<void> {
+  async sendAlertSMS(alertData: SMSAlertData): Promise<void> {
     const { touristName, alertType, location, trackingLink } = alertData;
     
     const message = `🚨 TOURIST SAFETY ALERT\n\nTourist: ${touristName}\nAlert: ${alertType}\nLocation: ${location}\nTrack: ${trackingLink}`;

@@ -1,7 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import { emailService, generateTrackingLink, generateDigitalIdLink } from "@/lib/emailService";
-import { smsService, validateSMSConfig } from "@/lib/smsService";
+import { smsService } from "@/lib/smsService";
+
+interface TestContact {
+  name: string;
+  phone_number: string;
+  email: string;
+  relationship: string;
+}
+
+interface TestTourist {
+  tourist_id: string;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  clerk_user_id: string;
+  emergency_contacts: TestContact[];
+  trip_start_date: string;
+  trip_end_date: string;
+  destination: string;
+}
+
+interface TestResultDetail {
+  success: boolean;
+  message: string;
+  recipient?: string;
+  recipients?: string[] | number | { email: string[]; sms: string[] };
+  subscriptions?: number;
+  note?: string;
+  email_sent?: boolean;
+  sms_sent?: boolean;
+  active_alerts?: number;
+  error?: string | null;
+}
+
+interface TestResults {
+  testType: string;
+  timestamp: string;
+  results: Record<string, TestResultDetail>;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +55,7 @@ export async function POST(request: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     // For testing, we'll either use the provided touristId or create test data
-    let tourist;
+    let tourist: TestTourist;
     if (touristId) {
       const { data, error } = await supabase
         .from("tourists")
@@ -31,7 +69,7 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
-      tourist = data;
+      tourist = data as TestTourist;
     } else {
       // Create test tourist data
       tourist = {
@@ -60,10 +98,10 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const testResults = {
+    const testResults: TestResults = {
       testType,
       timestamp: new Date().toISOString(),
-      results: {} as Record<string, any>,
+      results: {},
     };
 
     switch (testType) {
@@ -124,7 +162,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function testAllChannels(tourist: any, testResults: any) {
+async function testAllChannels(tourist: TestTourist, testResults: TestResults) {
   await testEmailNotifications(tourist, testResults);
   await testSMSNotifications(tourist, testResults);
   await testPushNotifications(tourist, testResults);
@@ -132,7 +170,7 @@ async function testAllChannels(tourist: any, testResults: any) {
   await testPanicAlert(tourist, testResults);
 }
 
-async function testEmailNotifications(tourist: any, testResults: any) {
+async function testEmailNotifications(tourist: TestTourist, testResults: TestResults) {
   try {
     const digitalIdLink = generateDigitalIdLink(tourist.tourist_id);
     
@@ -159,7 +197,7 @@ async function testEmailNotifications(tourist: any, testResults: any) {
   }
 }
 
-async function testSMSNotifications(tourist: any, testResults: any) {
+async function testSMSNotifications(tourist: TestTourist, testResults: TestResults) {
   try {
     // SMS simulation is always available
     testResults.results.sms = {
@@ -175,13 +213,13 @@ async function testSMSNotifications(tourist: any, testResults: any) {
       alertType: "panic",
       location: "Test Location",
       trackingLink,
-      emergencyContacts: tourist.emergency_contacts || [],
+      emergencyContacts: tourist.emergency_contacts,
     });
 
     testResults.results.sms = {
       success: true,
       message: "Panic alert SMS sent successfully",
-      recipients: tourist.emergency_contacts.map((c: any) => c.phone_number),
+      recipients: tourist.emergency_contacts.map((c) => c.phone_number),
     };
   } catch (error) {
     testResults.results.sms = {
@@ -192,7 +230,7 @@ async function testSMSNotifications(tourist: any, testResults: any) {
   }
 }
 
-async function testPushNotifications(tourist: any, testResults: any) {
+async function testPushNotifications(tourist: TestTourist, testResults: TestResults) {
   try {
     const supabase = createSupabaseAdminClient();
     
@@ -231,7 +269,7 @@ async function testPushNotifications(tourist: any, testResults: any) {
   }
 }
 
-async function testWelcomeEmail(tourist: any, testResults: any) {
+async function testWelcomeEmail(tourist: TestTourist, testResults: TestResults) {
   try {
     const digitalIdLink = generateDigitalIdLink(tourist.tourist_id);
     
@@ -258,7 +296,7 @@ async function testWelcomeEmail(tourist: any, testResults: any) {
   }
 }
 
-async function testPanicAlert(tourist: any, testResults: any) {
+async function testPanicAlert(tourist: TestTourist, testResults: TestResults) {
   try {
     const trackingLink = generateTrackingLink("test-panic-123", tourist.tourist_id);
     
@@ -267,7 +305,7 @@ async function testPanicAlert(tourist: any, testResults: any) {
       to: tourist.email,
       touristName: tourist.full_name,
       alertType: "panic",
-      emergencyContacts: tourist.emergency_contacts.map((c: any) => ({
+      emergencyContacts: tourist.emergency_contacts.map((c: TestContact) => ({
         name: c.name,
         email: c.email,
       })),
@@ -294,8 +332,8 @@ async function testPanicAlert(tourist: any, testResults: any) {
       email_sent: true,
       sms_sent: true,
       recipients: {
-        email: tourist.emergency_contacts.map((c: any) => c.email),
-        sms: tourist.emergency_contacts.map((c: any) => c.phone_number),
+        email: tourist.emergency_contacts.map((c) => c.email),
+        sms: tourist.emergency_contacts.map((c) => c.phone_number),
       },
     };
   } catch (error) {
@@ -307,7 +345,7 @@ async function testPanicAlert(tourist: any, testResults: any) {
   }
 }
 
-async function testGeoFenceAlert(tourist: any, testResults: any) {
+async function testGeoFenceAlert(tourist: TestTourist, testResults: TestResults) {
   try {
     const trackingLink = generateTrackingLink("test-geofence-123", tourist.tourist_id);
     
@@ -315,7 +353,7 @@ async function testGeoFenceAlert(tourist: any, testResults: any) {
       to: tourist.email,
       touristName: tourist.full_name,
       alertType: "geo_fence",
-      emergencyContacts: tourist.emergency_contacts.map((c: any) => ({
+      emergencyContacts: tourist.emergency_contacts.map((c: TestContact) => ({
         name: c.name,
         email: c.email,
       })),
@@ -330,7 +368,7 @@ async function testGeoFenceAlert(tourist: any, testResults: any) {
     testResults.results.geo_fence_alert = {
       success: true,
       message: "Geo-fence alert email sent successfully",
-      recipients: tourist.emergency_contacts.map((c: any) => c.email),
+      recipients: tourist.emergency_contacts.map((c: TestContact) => c.email),
     };
   } catch (error) {
     testResults.results.geo_fence_alert = {
@@ -341,7 +379,7 @@ async function testGeoFenceAlert(tourist: any, testResults: any) {
   }
 }
 
-async function testDailySummary(tourist: any, testResults: any) {
+async function testDailySummary(tourist: TestTourist, testResults: TestResults) {
   try {
     await emailService.sendDailySafetySummary({
       touristName: tourist.full_name,
@@ -360,7 +398,7 @@ async function testDailySummary(tourist: any, testResults: any) {
       ],
       totalLocations: 15,
       lastLocation: "28.6139, 77.2090 (New Delhi)",
-      emergencyContacts: tourist.emergency_contacts,
+      emergencyContacts: tourist.emergency_contacts.map(c => ({ name: c.name, phone: c.phone_number })),
     });
 
     testResults.results.daily_summary = {
@@ -379,7 +417,7 @@ async function testDailySummary(tourist: any, testResults: any) {
 }
 
 // GET endpoint to check system status
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const systemStatus = {
       timestamp: new Date().toISOString(),

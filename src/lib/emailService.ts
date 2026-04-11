@@ -1,7 +1,16 @@
 // Email service for tourist safety notifications - Updated 2026-04-08
 
+export type WelcomeEmailDataType = {
+  touristName: string;
+  touristEmail: string;
+  digitalIdUrl: string;
+  tripStartDate: string;
+  tripEndDate: string;
+  destination: string;
+};
+
 interface EmailService {
-  sendWelcomeEmail: (data: WelcomeEmailData) => Promise<void>;
+  sendWelcomeEmail: (data: WelcomeEmailDataType) => Promise<void>;
   sendPanicAlertEmail: (data: PanicAlertEmailData) => Promise<void>;
   sendGeoFenceAlertEmail: (data: GeoFenceAlertEmailData) => Promise<void>;
   sendDailySafetySummary: (data: DailySafetySummaryData) => Promise<void>;

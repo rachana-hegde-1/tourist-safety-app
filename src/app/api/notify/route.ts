@@ -3,6 +3,34 @@ import { createSupabaseAdminClient } from "@/lib/supabase";
 import { emailService, generateTrackingLink, generateDigitalIdLink } from "@/lib/emailService";
 import { smsService, validateSMSConfig } from "@/lib/smsService";
 
+interface EmergencyContact {
+  name: string;
+  email?: string;
+  phone_number?: string;
+  relationship?: string;
+}
+
+interface Tourist {
+  full_name: string;
+  email: string;
+  phone_number: string;
+  clerk_user_id: string;
+  trip_start_date: string;
+  trip_end_date: string;
+  destination: string;
+  sms_notifications: boolean;
+}
+
+interface Alert {
+  type: string;
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+  safe_zone_name?: string;
+  safety_score?: number;
+  activity_count?: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { alertId } = await request.json();
@@ -29,6 +57,7 @@ export async function POST(request: NextRequest) {
           trip_start_date,
           trip_end_date,
           destination,
+          sms_notifications,
           emergency_contacts(
             name,
             phone_number,
@@ -152,7 +181,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePushNotifications(alertId: string, tourist: any) {
+async function handlePushNotifications(alertId: string, tourist: Tourist) {
   try {
     // Get push subscriptions for the tourist
     const supabase = createSupabaseAdminClient();
@@ -195,20 +224,19 @@ async function handlePushNotifications(alertId: string, tourist: any) {
 }
 
 async function handleEmailNotifications(
-  alert: any,
-  tourist: any,
-  emergencyContacts: any[],
+  alert: Alert,
+  tourist: Tourist,
+  emergencyContacts: EmergencyContact[],
   trackingLink: string,
   digitalIdLink: string
 ) {
   try {
     const alertType = alert.type;
-    let emailResult;
 
     switch (alertType) {
       case "welcome":
         // This would be handled during onboarding, not alert processing
-        emailResult = await emailService.sendWelcomeEmail({
+        await emailService.sendWelcomeEmail({
           touristName: tourist.full_name,
           touristEmail: tourist.email,
           digitalIdUrl: digitalIdLink,
@@ -220,13 +248,13 @@ async function handleEmailNotifications(
 
       case "panic":
       case "sos":
-        emailResult = await emailService.sendPanicAlertEmail({
+        await emailService.sendPanicAlertEmail({
           to: tourist.email,
           touristName: tourist.full_name,
           alertType: alert.type,
           emergencyContacts: emergencyContacts.map(c => ({
             name: c.name,
-            email: c.email,
+            email: c.email || "",
           })),
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
@@ -236,13 +264,13 @@ async function handleEmailNotifications(
         break;
 
       case "geo_fence":
-        emailResult = await emailService.sendGeoFenceAlertEmail({
+        await emailService.sendGeoFenceAlertEmail({
           to: tourist.email,
           touristName: tourist.full_name,
           alertType: "geo_fence",
           emergencyContacts: emergencyContacts.map(c => ({
             name: c.name,
-            email: c.email,
+            email: c.email || "",
           })),
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
@@ -255,7 +283,7 @@ async function handleEmailNotifications(
 
     case "daily_summary":
       // This would be handled by a scheduled job
-      emailResult = await emailService.sendDailySafetySummary({
+      await emailService.sendDailySafetySummary({
         touristName: tourist.full_name,
         safetyScore: alert.safety_score || 85,
         activityCount: alert.activity_count || 10,
@@ -287,9 +315,9 @@ async function handleEmailNotifications(
 }
 
 async function handleSMSNotifications(
-  alert: any,
-  tourist: any,
-  emergencyContacts: any[],
+  alert: Alert,
+  tourist: Tourist,
+  emergencyContacts: EmergencyContact[],
   trackingLink: string
 ) {
   try {
@@ -304,13 +332,13 @@ async function handleSMSNotifications(
     }
 
     // Send SMS notifications
-    if (tourist.smsNotifications && emergencyContacts.length > 0) {
+    if (tourist.sms_notifications && emergencyContacts.length > 0) {
       await smsService.sendAlertSMS({
         touristName: tourist.full_name,
         alertType: alert.type,
         location: `${alert.latitude}, ${alert.longitude}`,
         trackingLink,
-        emergencyContacts: emergencyContacts.filter((contact: any) => contact.email)
+        emergencyContacts: emergencyContacts.filter((contact) => contact.email),
       });
     }
 

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { TouristMap } from "./TouristMap";
 import { PanicModal } from "./PanicModal";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 type AlertRow = {
   id?: string;
@@ -22,6 +23,7 @@ export function DashboardClient(props: {
   touristName: string;
   safetyScore: number;
   wearableConnected: boolean;
+  wearableDeviceId?: string | null;
   initialAlerts: AlertRow[];
 }) {
   const [alerts, setAlerts] = React.useState<AlertRow[]>(props.initialAlerts);
@@ -32,6 +34,7 @@ export function DashboardClient(props: {
     latitude: number;
     longitude: number;
     accuracy: number | null;
+    timestamp?: number;
   } | null>(null);
 
   const safetyVariant: "default" | "secondary" | "destructive" =
@@ -90,8 +93,8 @@ export function DashboardClient(props: {
   }
 
   return (
-    <div className="flex-1 w-full bg-zinc-50 dark:bg-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-6 sm:py-10">
+    <DashboardLayout>
+      <div className="max-w-6xl">
         {/* Top bar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -174,6 +177,34 @@ export function DashboardClient(props: {
 
             <Card>
               <CardHeader>
+                <CardTitle>Wearable status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{props.wearableConnected ? "Wearable linked" : "No wearable linked"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {props.wearableConnected
+                        ? `Device ID: ${props.wearableDeviceId}`
+                        : "Connect a wearable from settings to enable real-time tracking."}
+                    </p>
+                  </div>
+                  <Badge variant={props.wearableConnected ? "default" : "secondary"}>
+                    {props.wearableConnected ? "Connected" : "Not connected"}
+                  </Badge>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {currentLoc?.timestamp
+                    ? `Last update: ${new Date(currentLoc.timestamp).toLocaleString()}`
+                    : currentLoc
+                      ? "Last update received"
+                      : "Waiting for the latest location ping..."}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Recent alerts</CardTitle>
               </CardHeader>
               <CardContent>
@@ -226,7 +257,7 @@ export function DashboardClient(props: {
         currentLocation={currentLoc}
         onTriggered={() => void refreshAlerts()}
       />
-    </div>
+    </DashboardLayout>
   );
 }
 
