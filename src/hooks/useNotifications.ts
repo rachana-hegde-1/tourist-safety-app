@@ -279,7 +279,7 @@ export function useRealtimeNotifications() {
           
           // Show browser notification
           showLocalNotification({
-            title: `AegisTrack: ${alert.type.toUpperCase()}`,
+            title: `Aegistrack: ${alert.type.toUpperCase()}`,
             body: getAlertMessage(alert.type, alert.message),
             tag: `alert-${alert.id}`,
             url: "/dashboard",

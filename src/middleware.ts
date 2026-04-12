@@ -1,58 +1,50 @@
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase";
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Public routes that don't require authentication
-  const publicRoutes = ["/", "/sign-in", "/sign-up", "/track", "/api/wearable"];
-  
-  // Check if the route is public
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname.startsWith(route)
-  );
-  
-  // If it's a public route, continue
-  if (isPublicRoute) {
-    return NextResponse.next();
+export default clerkMiddleware(async (auth, req) => {
+  const authState = await auth();
+  const { pathname } = req.nextUrl;
+  const userId = authState.userId;
+
+  if (!userId) {
+    return;
   }
-  
-  // For protected routes, check if user has completed onboarding
-  if (pathname === "/dashboard" || pathname === "/onboarding") {
-    // Get the session token from the request
-    const token = request.cookies.get("__session")?.value;
-    
-    if (!token) {
-      // No session, redirect to sign-in
-      const signInUrl = new URL("/sign-in", request.url);
-      return NextResponse.redirect(signInUrl);
+
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/") || pathname === "/onboarding") {
+    const supabase = createSupabaseAdminClient();
+    const { data: tourist, error } = await supabase
+      .from("tourists")
+      .select("onboarding_completed")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Onboarding check failed:", error);
+      return;
     }
-    
-    try {
-      // Get user info from Clerk (this would need Clerk's server SDK)
-      // For now, we'll use a simpler approach by checking the session
-      // In a real implementation, you'd verify the Clerk token and get the user ID
-      
-      // For demonstration, we'll skip the onboarding check in middleware
-      // and handle it in the dashboard component itself
-      // This is because Clerk token verification requires their server SDK
-      
-    } catch (error) {
-      console.error("Middleware error:", error);
+
+    const completed = tourist?.onboarding_completed;
+    if (!completed && pathname === "/dashboard") {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = "/onboarding";
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (completed && pathname === "/onboarding") {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = "/dashboard";
+      return NextResponse.redirect(redirectUrl);
     }
   }
-  
-  return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/onboarding/:path*",
+    "/admin/:path*",
+    "/id/:path*",
+    "/settings/:path*",
   ],
 };

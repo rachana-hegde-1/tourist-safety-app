@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AegisTrack - Travel Safety Monitoring",
+  title: "Aegistrack - Travel Safety Monitoring",
   description: "Real-time safety monitoring and emergency alert system for travelers",
 };
 

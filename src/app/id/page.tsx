@@ -20,7 +20,7 @@ export default function DigitalIdPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       // Simulate download
       const link = document.createElement('a');
-      link.download = 'safetrip-digital-id.png';
+      link.download = 'aegistrack-digital-id.png';
       link.href = touristData?.digital_id_qr || '';
       link.click();
     } catch (error) {
@@ -34,8 +34,8 @@ export default function DigitalIdPage() {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'SafeTrip Digital ID',
-          text: 'My SafeTrip Digital ID for emergency verification',
+          title: 'Aegistrack Digital ID',
+          text: 'My Aegistrack Digital ID for emergency verification',
           url: window.location.href
         });
       } else {
@@ -92,7 +92,7 @@ export default function DigitalIdPage() {
                 <div className="flex items-center space-x-3">
                   <Shield className="h-8 w-8" />
                   <div>
-                    <h2 className="text-xl font-bold">SafeTrip Digital ID</h2>
+                    <h2 className="text-xl font-bold">Aegistrack Digital ID</h2>
                     <p className="text-blue-100">Official Tourist Identification</p>
                   </div>
                 </div>

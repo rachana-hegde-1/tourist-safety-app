@@ -40,7 +40,7 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <Shield className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">SafeTrip</span>
+              <span className="text-xl font-bold text-gray-900">Aegistrack</span>
             </div>
             <div className="flex items-center space-x-6">
               <Link href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">
@@ -70,7 +70,7 @@ export default function Home() {
               </div>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              SafeTrip
+              Aegistrack
             </h1>
             <p className="text-2xl md:text-3xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Smart Tourist Safety Monitoring System
@@ -182,11 +182,11 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Why Choose SafeTrip?
+                Why Choose Aegistrack?
               </h2>
               <div className="space-y-4">
                 <p className="text-lg text-gray-600">
-                  SafeTrip is India&apos;s premier tourist safety monitoring system, designed specifically for the unique challenges faced by domestic and international travelers.
+                  Aegistrack is India&apos;s premier tourist safety monitoring system, designed specifically for the unique challenges faced by domestic and international travelers.
                 </p>
                 <p className="text-lg text-gray-600">
                   Our platform combines cutting-edge technology with seamless integration to provide comprehensive protection, ensuring that help is always just a tap away.
@@ -236,7 +236,7 @@ export default function Home() {
             Ready to Travel Safely?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of tourists who trust SafeTrip for their safety across India
+            Join thousands of tourists who trust Aegistrack for their safety across India
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -263,10 +263,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <Shield className="h-6 w-6 text-blue-400" />
-              <span className="text-lg font-semibold text-white">SafeTrip</span>
+              <span className="text-lg font-semibold text-white">Aegistrack</span>
             </div>
             <div className="text-center md:text-right">
-              <p className="text-sm">© 2024 SafeTrip. Government of India Tourist Safety Initiative</p>
+              <p className="text-sm">© 2024 Aegistrack. Government of India Tourist Safety Initiative</p>
               <p className="text-xs mt-1">Keeping tourists safe across India</p>
             </div>
           </div>

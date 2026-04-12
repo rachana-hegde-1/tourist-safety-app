@@ -86,7 +86,7 @@ export function InstallPrompt({ className = "" }: InstallPromptProps) {
             <Download className="h-8 w-8 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Install SafeTrip
+            Install Aegistrack
           </h3>
           <p className="text-sm text-gray-600 mb-4">
             Get instant access to emergency alerts and safety features

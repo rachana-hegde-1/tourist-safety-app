@@ -1,6 +1,6 @@
 {
-  "name": "AegisTrack",
-  "short_name": "AegisTrack",
+  "name": "Aegistrack",
+  "short_name": "Aegistrack",
   "description": "Real-time safety monitoring and emergency alert system for travelers",
   "start_url": "/",
   "display": "standalone",

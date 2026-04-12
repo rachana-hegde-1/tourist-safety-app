@@ -67,7 +67,7 @@ export function DashboardNav({ className }: DashboardNavProps) {
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center space-x-2">
               <Shield className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">SafeTrip</span>
+              <span className="text-xl font-bold text-gray-900">Aegistrack</span>
             </div>
             <Button
               variant="ghost"
