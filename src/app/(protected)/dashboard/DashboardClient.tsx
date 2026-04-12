@@ -1,13 +1,16 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-import { TouristMap } from "./TouristMap";
+const TouristMap = dynamic(() => import("./TouristMap"), {
+  ssr: false,
+});
 import { PanicModal } from "./PanicModal";
 import { DashboardLayout } from "@/components/DashboardLayout";
 

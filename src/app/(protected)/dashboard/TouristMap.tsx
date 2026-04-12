@@ -12,7 +12,7 @@ type Props = {
   onLocation?: (loc: { latitude: number; longitude: number; accuracy: number | null; timestamp: number }) => void;
 };
 
-export function TouristMap({ onLocation }: Props) {
+export default function TouristMap({ onLocation }: Props) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const markerRef = React.useRef<L.CircleMarker | null>(null);

@@ -28,7 +28,6 @@ export default function Page() {
       <SignIn
         path="/sign-in"
         signUpUrl="/sign-up"
-        afterSignInUrl={redirectUrl}
       />
     </div>
   );

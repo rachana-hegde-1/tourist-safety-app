@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
 interface EmergencyContact {
-  id?: number;
+  id?: number | string;
   name: string;
   phone: string;
   relationship: string;
