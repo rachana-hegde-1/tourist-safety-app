@@ -6,9 +6,9 @@ import { useTouristData } from "@/hooks/useTouristData";
 import { AlertTriangle } from "lucide-react";
 
 export default function DashboardPage() {
-  const { touristData, isLoading, error } = useTouristData();
+  const { touristData, isLoading, isRedirecting, error } = useTouristData();
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
         <div className="max-w-6xl mx-auto space-y-6">
@@ -25,13 +25,25 @@ export default function DashboardPage() {
     );
   }
 
-  if (error || !touristData) {
+  if (error) {
     return (
       <DashboardLayout>
         <div className="max-w-6xl mx-auto py-12 text-center">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900">Unable to load your dashboard</h2>
-          <p className="mt-2 text-gray-600">{error || "We could not find your tourist profile. Redirecting you to onboarding..."}</p>
+          <p className="mt-2 text-gray-600">{error}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-6xl mx-auto py-12 text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900">Checking your profile</h2>
+          <p className="mt-2 text-gray-600">Redirecting you to onboarding if needed...</p>
         </div>
       </DashboardLayout>
     );

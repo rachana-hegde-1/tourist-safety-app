@@ -26,6 +26,7 @@ export function useTouristData() {
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [touristData, setTouristData] = useState<TouristData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,14 +55,14 @@ export function useTouristData() {
 
         if (error) {
           console.error("Error fetching tourist data:", error);
-          setError("Failed to fetch tourist data");
+          setError(error.message ?? "Failed to fetch tourist data");
           setIsLoading(false);
           return;
         }
 
         if (!tourist) {
           // Tourist hasn't completed onboarding
-          setIsLoading(false);
+          setIsRedirecting(true);
           router.push("/onboarding");
           return;
         }
@@ -70,13 +71,13 @@ export function useTouristData() {
         setIsLoading(false);
       } catch (error) {
         console.error("Error:", error);
-        setError("An unexpected error occurred");
+        setError(error instanceof Error ? error.message : "An unexpected error occurred");
         setIsLoading(false);
       }
     };
 
     fetchTouristData();
-  }, [isLoaded, isSignedIn, user, router]);
+  }, [isLoaded, isSignedIn, user, router, isRedirecting]);
 
-  return { touristData, isLoading, error };
+  return { touristData, isLoading, isRedirecting, error };
 }

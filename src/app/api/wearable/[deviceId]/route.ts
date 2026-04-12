@@ -52,7 +52,7 @@ export async function POST(
     }
 
     // Verify device secret (in production, you'd verify against database)
-    const expectedSecret = process.env.WEARABLE_DEVICE_SECRET;
+    const expectedSecret = process.env.WEARABLE_API_SECRET;
     if (deviceSecret !== expectedSecret) {
       return NextResponse.json(
         { error: "Invalid device secret" },
@@ -135,14 +135,14 @@ export async function POST(
       const { error: alertError } = await supabase
         .from("alerts")
         .insert({
-          user_id: wearable.linked_user_id,
+          clerk_user_id: wearable.linked_user_id,
           type,
           latitude,
           longitude,
           timestamp: new Date().toISOString(),
           device_id: deviceId,
-          status: "active",
-          message: message || `${type} detected from wearable device`
+          status: "OPEN",
+          message: message || `${type} detected from wearable device`,
         });
 
       if (alertError) {
@@ -152,7 +152,7 @@ export async function POST(
 
     // Create alerts based on data
     if (sos_triggered) {
-      await createAlert("sos", "SOS button activated on wearable device");
+      await createAlert("panic", "SOS button activated on wearable device");
     }
 
     if (fall_detected) {

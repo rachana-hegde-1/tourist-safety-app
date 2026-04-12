@@ -7,7 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
 import { submitOnboarding } from "./actions";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,8 +94,10 @@ export default function OnboardingPage() {
     }
 
     const checkOnboardingStatus = async () => {
+      setIsCheckingOnboarding(true);
+
       try {
-        const supabase = createSupabaseAdminClient();
+        const supabase = createSupabaseBrowserClient();
         const { data: tourist, error } = await supabase
           .from("tourists")
           .select("onboarding_completed")
@@ -108,15 +110,13 @@ export default function OnboardingPage() {
           return;
         }
 
-        // If onboarding is completed, redirect to dashboard
         if (tourist?.onboarding_completed) {
           router.push("/dashboard");
           return;
         }
-
-        setIsCheckingOnboarding(false);
       } catch (error) {
         console.error("Error checking onboarding status:", error);
+      } finally {
         setIsCheckingOnboarding(false);
       }
     };

@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardLayout } from "@/components/DashboardLayout";
 
 export default function DashboardAlertsPage() {
-  const { touristData, isLoading, error } = useTouristData();
+  const { touristData, isLoading, isRedirecting, error } = useTouristData();
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
         <div className="max-w-7xl mx-auto">
@@ -26,15 +26,27 @@ export default function DashboardAlertsPage() {
     );
   }
 
-  if (error || !touristData) {
+  if (error) {
     return (
       <DashboardLayout>
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading alerts</h2>
-            <p className="text-gray-600">{error || "Unable to load your alerts"}</p>
+            <p className="text-gray-600">{error}</p>
           </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto py-12 text-center">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking your profile</h2>
+          <p className="text-gray-600">Redirecting you to onboarding if needed...</p>
         </div>
       </DashboardLayout>
     );

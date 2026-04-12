@@ -1,0 +1,106 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
+import { createSecureSupabaseClient, securityHeaders } from "@/lib/secure-db";
+
+const UpdateProfileSchema = z.object({
+  full_name: z.string().min(1),
+  phone_number: z.string().min(5),
+  preferred_language: z.string().min(1),
+  emergency_contacts: z.array(
+    z.object({
+      name: z.string().min(1),
+      phone_number: z.string().min(5),
+      relationship: z.string().min(1),
+      id: z.string().optional(),
+    })
+  ),
+});
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ ok: false, reason: "unauthorized" }, { status: 401, headers: securityHeaders });
+  }
+
+  const supabase = createSecureSupabaseClient(userId);
+  const [{ data: tourist, error: touristError }, { data: contacts, error: contactsError }] = await Promise.all([
+    supabase
+      .from("tourists")
+      .select("full_name, phone_number, preferred_language, device_id")
+      .eq("clerk_user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("emergency_contacts")
+      .select("id, name, phone_number, relationship")
+      .eq("clerk_user_id", userId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (touristError || contactsError) {
+    return NextResponse.json(
+      { ok: false, reason: "db_error" },
+      { status: 500, headers: securityHeaders }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      profile: tourist ?? null,
+      emergencyContacts: contacts ?? [],
+    },
+    { headers: securityHeaders }
+  );
+}
+
+export async function PATCH(request: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ ok: false, reason: "unauthorized" }, { status: 401, headers: securityHeaders });
+  }
+
+  const body = await request.json();
+  const parseResult = UpdateProfileSchema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { ok: false, reason: "invalid_input", details: parseResult.error.issues },
+      { status: 400, headers: securityHeaders }
+    );
+  }
+
+  const { full_name, phone_number, preferred_language, emergency_contacts } = parseResult.data;
+  const supabase = createSecureSupabaseClient(userId);
+
+  const { error: touristError } = await supabase
+    .from("tourists")
+    .update({ full_name, phone_number, preferred_language, updated_at: new Date().toISOString() })
+    .eq("clerk_user_id", userId);
+
+  if (touristError) {
+    return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
+  }
+
+  const { error: deleteError } = await supabase
+    .from("emergency_contacts")
+    .delete()
+    .eq("clerk_user_id", userId);
+
+  if (deleteError) {
+    return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
+  }
+
+  const formattedContacts = emergency_contacts.map((contact) => ({
+    clerk_user_id: userId,
+    name: contact.name,
+    phone_number: contact.phone_number,
+    relationship: contact.relationship,
+  }));
+
+  const { error: insertError } = await supabase.from("emergency_contacts").insert(formattedContacts);
+  if (insertError) {
+    return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
+  }
+
+  return NextResponse.json({ ok: true }, { headers: securityHeaders });
+}

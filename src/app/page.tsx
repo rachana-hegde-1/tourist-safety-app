@@ -7,14 +7,21 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (isSignedIn && isLoaded) {
-      router.push("/dashboard");
+    if (!isLoaded) return;
+    if (!isSignedIn) return;
+
+    const role = (user?.publicMetadata as { role?: string } | undefined)?.role;
+    if (role === "admin" || role === "police") {
+      router.push("/admin");
+      return;
     }
-  }, [isSignedIn, isLoaded, router]);
+
+    router.push("/dashboard");
+  }, [isSignedIn, isLoaded, user, router]);
 
   // Show loading state while checking authentication
   if (!isLoaded) {
@@ -52,7 +59,7 @@ export default function Home() {
               <Link href="/sign-up" className="text-blue-600 hover:text-blue-700 font-medium">
                 Tourist Sign Up
               </Link>
-              <Link href="/admin/sign-in" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <Link href="/sign-in?redirect=/admin" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 Admin Login
               </Link>
             </div>

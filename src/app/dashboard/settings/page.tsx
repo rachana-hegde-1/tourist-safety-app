@@ -26,11 +26,11 @@ interface ProfileData {
   preferred_language: string;
 }
 
-interface TouristProfileData {
-  full_name?: string;
-  phone_number?: string;
-  preferred_language?: string;
-  device_id?: string;
+interface EmergencyContactResponse {
+  id: string;
+  name: string;
+  phone_number: string;
+  relationship: string;
 }
 
 const LANGUAGES = [
@@ -48,7 +48,7 @@ const LANGUAGES = [
 ];
 
 export default function DashboardSettingsPage() {
-  const { touristData, isLoading, error } = useTouristData();
+  const { touristData, isLoading, isRedirecting, error } = useTouristData();
   const [isEditingContacts, setIsEditingContacts] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [newContact, setNewContact] = useState<EmergencyContact>({ name: "", phone: "", relationship: "" });
@@ -64,27 +64,43 @@ export default function DashboardSettingsPage() {
   const [verifyReason, setVerifyReason] = useState<string | null>(null);
   const [isLinkingDevice, setIsLinkingDevice] = useState(false);
 
-  // Initialize data when touristData loads
   useEffect(() => {
-    if (touristData) {
-      const touristProfile = touristData as TouristProfileData;
-      setProfileData({
-        full_name: touristProfile.full_name || "",
-        phone_number: touristProfile.phone_number || "",
-        preferred_language: touristProfile.preferred_language || "",
-      });
-      setLinkedDeviceId(touristProfile.device_id ?? null);
-      // In a real app, fetch emergency contacts from Supabase
-      setEmergencyContacts([
-        { name: "Emergency Contact 1", phone: "+91XXXXXXXXXX", relationship: "Parent" },
-        { name: "Emergency Contact 2", phone: "+91XXXXXXXXXX", relationship: "Spouse" },
-      ]);
-    }
-  }, [touristData]);
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("/api/tourist/profile");
+        const json = await response.json();
+
+        if (!response.ok || json.ok === false) {
+          toast.error("Unable to load profile settings.");
+          return;
+        }
+
+        setProfileData({
+          full_name: json.profile?.full_name || "",
+          phone_number: json.profile?.phone_number || "",
+          preferred_language: json.profile?.preferred_language || "English",
+        });
+        setLinkedDeviceId(json.profile?.device_id ?? null);
+        setEmergencyContacts(
+          (json.emergencyContacts ?? []).map((contact: EmergencyContactResponse) => ({
+            id: contact.id,
+            name: contact.name,
+            phone: contact.phone_number,
+            relationship: contact.relationship,
+          }))
+        );
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load profile settings.");
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleAddContact = () => {
     if (newContact.name && newContact.phone && newContact.relationship) {
-      setEmergencyContacts([...emergencyContacts, { ...newContact, id: Date.now() }]);
+      setEmergencyContacts([...emergencyContacts, { ...newContact, id: `${Date.now()}` }]);
       setNewContact({ name: "", phone: "", relationship: "" });
       toast.success("Emergency contact added successfully");
     } else {
@@ -92,19 +108,47 @@ export default function DashboardSettingsPage() {
     }
   };
 
-  const handleRemoveContact = (id: number) => {
+  const handleRemoveContact = (id?: number | string) => {
+    if (!id) return;
     setEmergencyContacts(emergencyContacts.filter(contact => contact.id !== id));
     toast.success("Emergency contact removed");
   };
 
   const handleUpdateProfile = async () => {
     setIsUpdatingProfile(true);
+
+    if (!profileData.full_name || !profileData.phone_number || !profileData.preferred_language) {
+      toast.error("Full name, phone number, and language are required.");
+      setIsUpdatingProfile(false);
+      return;
+    }
+
     try {
-      // In a real app, update Supabase here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch("/api/tourist/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: profileData.full_name,
+          phone_number: profileData.phone_number,
+          preferred_language: profileData.preferred_language,
+          emergency_contacts: emergencyContacts.map((contact) => ({
+            name: contact.name,
+            phone_number: contact.phone,
+            relationship: contact.relationship,
+          })),
+        }),
+      });
+
+      const json = await response.json();
+      if (!response.ok || json.ok === false) {
+        toast.error("Failed to save profile settings.");
+        return;
+      }
+
       toast.success("Profile updated successfully");
-    } catch {
-      toast.error("Failed to update profile");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update profile.");
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -177,7 +221,7 @@ export default function DashboardSettingsPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
@@ -194,14 +238,28 @@ export default function DashboardSettingsPage() {
     );
   }
 
-  if (error || !touristData) {
+  if (error) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <Settings className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading settings</h2>
-            <p className="text-gray-600">{error || "Unable to load your settings"}</p>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <Settings className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking your profile</h2>
+            <p className="text-gray-600">Redirecting you to onboarding if needed...</p>
           </div>
         </div>
       </DashboardLayout>

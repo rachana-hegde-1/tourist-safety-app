@@ -9,7 +9,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { toast } from "sonner";
 
 export default function DashboardSharePage() {
-  const { touristData, isLoading, error } = useTouristData();
+  const { touristData, isLoading, isRedirecting, error } = useTouristData();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export default function DashboardSharePage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -67,14 +67,28 @@ export default function DashboardSharePage() {
     );
   }
 
-  if (error || !touristData) {
+  if (error) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center">
             <Share2 className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <h2 className="text-2xl font-semibold text-red-900">Unable to load share settings</h2>
-            <p className="mt-2 text-sm text-red-700">{error || "Please try again later."}</p>
+            <p className="mt-2 text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="rounded-3xl border border-yellow-200 bg-yellow-50 p-10 text-center">
+            <Share2 className="mx-auto mb-4 h-12 w-12 text-yellow-500" />
+            <h2 className="text-2xl font-semibold text-yellow-900">Checking your profile</h2>
+            <p className="mt-2 text-sm text-yellow-700">Redirecting you to onboarding if needed...</p>
           </div>
         </div>
       </DashboardLayout>

@@ -10,7 +10,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 export default function DigitalIdPage() {
-  const { touristData, isLoading, error } = useTouristData();
+  const { touristData, isLoading, isRedirecting, error } = useTouristData();
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   const handleDownloadQR = async () => {
@@ -48,7 +48,7 @@ export default function DigitalIdPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
@@ -61,14 +61,28 @@ export default function DigitalIdPage() {
     );
   }
 
-  if (error || !touristData) {
+  if (error) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <CreditCard className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading Digital ID</h2>
-            <p className="text-gray-600">{error || "Unable to load your digital ID"}</p>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!touristData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <CreditCard className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking your profile</h2>
+            <p className="text-gray-600">Redirecting you to onboarding if needed...</p>
           </div>
         </div>
       </DashboardLayout>
