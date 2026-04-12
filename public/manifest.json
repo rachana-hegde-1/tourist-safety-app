@@ -1,7 +1,7 @@
 {
-  "name": "Tourist Safety",
-  "short_name": "SafeTrip",
-  "description": "Official Tourist Safety System - Emergency alerts, location sharing, and real-time safety monitoring for tourists in India",
+  "name": "AegisTrack",
+  "short_name": "AegisTrack",
+  "description": "Real-time safety monitoring and emergency alert system for travelers",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

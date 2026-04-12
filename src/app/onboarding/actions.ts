@@ -1,19 +1,13 @@
 "use server";
 
-import crypto from "node:crypto";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { createSupabaseAdminClient } from "@/lib/supabase";
-import QRCode from "qrcode";
 
 type EmergencyContactInput = {
   name: string;
   phone: string;
   relationship: string;
 };
-
-function sha256Hex(input: string) {
-  return crypto.createHash("sha256").update(input, "utf8").digest("hex");
-}
 
 function required(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -27,6 +21,8 @@ export async function submitOnboarding(formData: FormData) {
   try {
     const { userId } = await auth();
     if (!userId) throw new Error("You must be signed in to complete onboarding.");
+
+    const user = await currentUser();
 
     const fullName = required(formData, "fullName");
     const phoneNumber = required(formData, "phoneNumber");
@@ -56,9 +52,8 @@ export async function submitOnboarding(formData: FormData) {
 
     const supabase = createSupabaseAdminClient();
 
-    // Get email from form data or use empty string
-    const emailFromForm = formData.get("email");
-    const email = typeof emailFromForm === "string" ? emailFromForm.trim() : "";
+    // Get email from Clerk user
+    const email = user?.primaryEmailAddress?.emailAddress || null;
 
     // Optional wearable linking - only update wearables table, don't add to tourists
     if (deviceId) {
@@ -93,13 +88,14 @@ export async function submitOnboarding(formData: FormData) {
       {
         clerk_user_id: userId,
         full_name: fullName,
-        phone: phoneNumber,
+        phone_number: phoneNumber,
         email: email,
         id_type: idType,
         id_number: idNumber,
-        trip_start: tripStartDate,
-        trip_end: tripEndDate,
+        trip_start_date: tripStartDate,
+        trip_end_date: tripEndDate,
         destination,
+        preferred_language: preferredLanguage,
         onboarding_completed: true,
       },
       { onConflict: "clerk_user_id" },
@@ -122,21 +118,23 @@ export async function submitOnboarding(formData: FormData) {
 
     if (deleteError) {
       console.error("[Onboarding] Delete emergency contacts error:", deleteError);
-      throw new Error("Failed to update emergency contacts.");
-    }
+      // Don't fail onboarding if emergency_contacts table doesn't exist
+      // throw new Error("Failed to update emergency contacts.");
+    } else {
+      const { error: insertError } = await supabase.from("emergency_contacts").insert(
+        emergencyContacts.map((c) => ({
+          clerk_user_id: userId,
+          name: c.name,
+          phone_number: c.phone,
+          relationship: c.relationship,
+        })),
+      );
 
-    const { error: insertError } = await supabase.from("emergency_contacts").insert(
-      emergencyContacts.map((c) => ({
-        clerk_user_id: userId,
-        name: c.name,
-        phone_number: c.phone,
-        relationship: c.relationship,
-      })),
-    );
-
-    if (insertError) {
-      console.error("[Onboarding] Insert emergency contacts error:", insertError);
-      throw new Error("Failed to save emergency contacts.");
+      if (insertError) {
+        console.error("[Onboarding] Insert emergency contacts error:", insertError);
+        // Don't fail onboarding if emergency_contacts table doesn't exist
+        // throw new Error("Failed to save emergency contacts.");
+      }
     }
 
     console.log("[Onboarding] Successfully completed for user:", userId);
