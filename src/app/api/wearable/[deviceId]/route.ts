@@ -18,13 +18,29 @@ const WearableDataSchema = z.object({
 const DeviceIdSchema = z.string().min(10).max(50).regex(/^[a-zA-Z0-9_-]+$/);
 
 // Rate limiting configuration
-const ratelimit = new Ratelimit({
-  redis: new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  }),
-  limiter: Ratelimit.slidingWindow(10, "10 s"), // 10 requests per 10 seconds per device
-});
+const getRateLimiter = () => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    throw new Error(
+      "Missing Upstash Redis env vars. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN."
+    );
+  }
+
+  return new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(10, "10 s"), // 10 requests per 10 seconds per device
+  });
+};
+
+let rateLimiter: Ratelimit | undefined;
+const getRateLimit = () => {
+  if (!rateLimiter) {
+    rateLimiter = getRateLimiter();
+  }
+  return rateLimiter;
+};
 
 export async function POST(
   request: NextRequest,
@@ -62,7 +78,7 @@ export async function POST(
 
     // Apply rate limiting
     const identifier = `wearable:${deviceId}`;
-    const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
+    const { success, limit, reset, remaining } = await getRateLimit().limit(identifier);
 
     if (!success) {
       return NextResponse.json(

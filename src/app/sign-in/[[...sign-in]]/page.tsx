@@ -14,14 +14,8 @@ export default function Page() {
     if (!isLoaded) return;
     if (!isSignedIn) return;
 
-    const role = (user?.publicMetadata as { role?: string } | undefined)?.role;
-    if (role === "admin" || role === "police") {
-      router.push("/admin");
-      return;
-    }
-
     router.push(redirectUrl);
-  }, [isLoaded, isSignedIn, user, redirectUrl, router]);
+  }, [isLoaded, isSignedIn, redirectUrl, router]);
 
   return (
     <div className="min-h-[calc(100vh-0px)] w-full flex items-center justify-center p-6 bg-background">

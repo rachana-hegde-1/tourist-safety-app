@@ -14,14 +14,8 @@ export default function Home() {
     if (!isLoaded) return;
     if (!isSignedIn) return;
 
-    const role = (user?.publicMetadata as { role?: string } | undefined)?.role;
-    if (role === "admin" || role === "police") {
-      router.push("/admin");
-      return;
-    }
-
     router.push("/dashboard");
-  }, [isSignedIn, isLoaded, user, router]);
+  }, [isSignedIn, isLoaded, router]);
 
   // Show loading state while checking authentication
   if (!isLoaded) {
@@ -59,8 +53,8 @@ export default function Home() {
               <Link href="/sign-up" className="text-blue-600 hover:text-blue-700 font-medium">
                 Tourist Sign Up
               </Link>
-              <Link href="/sign-in?redirect=/admin" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                Admin Login
+              <Link href="/sign-in" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Sign In
               </Link>
             </div>
           </div>
@@ -94,13 +88,6 @@ export default function Home() {
               >
                 <Users className="mr-2 h-5 w-5" />
                 I am a Tourist
-              </Link>
-              <Link
-                href="/admin/sign-in"
-                className="inline-flex items-center px-8 py-4 text-lg font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600 transition-colors"
-              >
-                <Shield className="mr-2 h-5 w-5" />
-                Police / Admin Login
               </Link>
             </div>
           </div>
@@ -252,13 +239,6 @@ export default function Home() {
             >
               <Users className="mr-2 h-5 w-5" />
               Sign Up as Tourist
-            </Link>
-            <Link
-              href="/admin/sign-in"
-              className="inline-flex items-center px-8 py-4 bg-blue-700 text-white font-medium rounded-xl hover:bg-blue-800 transition-colors border border-blue-500"
-            >
-              <Shield className="mr-2 h-5 w-5" />
-              Admin Access
             </Link>
           </div>
         </div>
