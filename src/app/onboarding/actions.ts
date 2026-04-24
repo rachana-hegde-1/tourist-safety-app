@@ -22,7 +22,7 @@ function required(formData: FormData, key: string) {
 export async function submitOnboarding(formData: FormData) {
   try {
     const { userId } = await auth();
-    if (!userId) throw new Error("You must be signed in to complete onboarding.");
+    if (!userId) return { success: false, error: "You must be signed in to complete onboarding." };
 
     const user = await currentUser();
 
@@ -199,7 +199,7 @@ export async function submitOnboarding(formData: FormData) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error during onboarding";
     console.error("[Onboarding] Error:", errorMessage, error);
-    throw error;
+    return { success: false, error: errorMessage };
   }
 }
 

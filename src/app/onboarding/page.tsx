@@ -288,7 +288,11 @@ export default function OnboardingPage() {
 
     startSubmit(async () => {
       try {
-        await submitOnboarding(fd);
+        const result = await submitOnboarding(fd);
+        if (result && !result.success) {
+          toast.error(result.error || "Failed to submit onboarding.");
+          return;
+        }
         router.push("/dashboard");
       } catch (e) {
         const message = e instanceof Error ? e.message : "Failed to submit onboarding.";
