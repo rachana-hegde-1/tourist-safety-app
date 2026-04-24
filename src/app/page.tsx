@@ -14,7 +14,7 @@ export default function Home() {
     if (!isLoaded) return;
     if (!isSignedIn) return;
 
-    router.push("/dashboard");
+    router.push("/onboarding");
   }, [isSignedIn, isLoaded, router]);
 
   // Show loading state while checking authentication
