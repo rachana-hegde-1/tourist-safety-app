@@ -244,7 +244,7 @@ export default function DashboardSettingsPage() {
       setVerifyStatus("idle");
       setVerifyReason(null);
       toast.success("Wearable discovered via Bluetooth. Device ID has been filled.");
-    } catch (error) {
+    } catch {
       toast.error("Failed to connect to wearable via Bluetooth.");
     }
   };

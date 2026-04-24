@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export default function Page() {
   const router = useRouter();
   const params = useSearchParams();
-  const { isSignedIn, isLoaded, user } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const redirectUrl = params.get("redirect") ?? "/onboarding";
 
   useEffect(() => {

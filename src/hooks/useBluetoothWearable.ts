@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 const WEARABLE_SERVICE_UUID = "00001234-0000-1000-8000-00805f9b34fb";
 const DEVICE_ID_CHARACTERISTIC_UUID = "00005678-0000-1000-8000-00805f9b34fb";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type BluetoothDeviceLike = any;
 
 export function useBluetoothWearable() {
@@ -20,6 +21,7 @@ export function useBluetoothWearable() {
   const bleSupported =
     typeof navigator !== "undefined" &&
     "bluetooth" in navigator &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     typeof (navigator as any).bluetooth?.requestDevice === "function";
 
   const connectWearable = useCallback(async () => {
@@ -32,6 +34,7 @@ export function useBluetoothWearable() {
     setBleStatus("scanning");
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const device = await (navigator as any).bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [WEARABLE_SERVICE_UUID],

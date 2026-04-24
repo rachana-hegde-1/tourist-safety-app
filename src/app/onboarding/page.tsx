@@ -157,16 +157,26 @@ export default function OnboardingPage() {
   function goNext() {
     if (step === "1") {
       if (!fullName.trim()) return toast.error("Full name is required.");
+      if (fullName.trim().length < 2) return toast.error("Full name must be at least 2 characters.");
       if (!phoneNumber.trim()) return toast.error("Phone number is required.");
+      if (phoneNumber.trim().length < 10) return toast.error("Please enter a valid phone number.");
       if (!idType) return toast.error("ID type is required.");
       if (!idNumber.trim()) return toast.error("ID number is required.");
+      if (idNumber.trim().length < 4) return toast.error("Please enter a valid ID number.");
       setStep("2");
       return;
     }
     if (step === "2") {
       if (!destination.trim()) return toast.error("Destination is required.");
+      if (destination.trim().length < 2) return toast.error("Please enter a valid destination.");
       if (!tripStartDate) return toast.error("Trip start date is required.");
       if (!tripEndDate) return toast.error("Trip end date is required.");
+      if (new Date(tripEndDate) < new Date(tripStartDate)) {
+        return toast.error("Trip end date must be after start date.");
+      }
+      if (new Date(tripStartDate).getTime() < new Date().setHours(0,0,0,0)) {
+        return toast.error("Trip start date cannot be in the past.");
+      }
       if (!preferredLanguage) return toast.error("Preferred language is required.");
       setStep("3");
       return;
@@ -240,12 +250,22 @@ export default function OnboardingPage() {
 
   function submit() {
     if (!fullName.trim()) return toast.error("Full name is required.");
+    if (fullName.trim().length < 2) return toast.error("Full name must be at least 2 characters.");
     if (!phoneNumber.trim()) return toast.error("Phone number is required.");
+    if (phoneNumber.trim().length < 10) return toast.error("Please enter a valid phone number.");
     if (!idType) return toast.error("ID type is required.");
     if (!idNumber.trim()) return toast.error("ID number is required.");
+    if (idNumber.trim().length < 4) return toast.error("Please enter a valid ID number.");
     if (!destination.trim()) return toast.error("Destination is required.");
+    if (destination.trim().length < 2) return toast.error("Please enter a valid destination.");
     if (!tripStartDate) return toast.error("Trip start date is required.");
     if (!tripEndDate) return toast.error("Trip end date is required.");
+    if (new Date(tripEndDate) < new Date(tripStartDate)) {
+      return toast.error("Trip end date must be after start date.");
+    }
+    if (new Date(tripStartDate).getTime() < new Date().setHours(0,0,0,0)) {
+      return toast.error("Trip start date cannot be in the past.");
+    }
     if (!preferredLanguage) return toast.error("Preferred language is required.");
     if (contacts.length < 1) return toast.error("Add at least 1 emergency contact.");
 
