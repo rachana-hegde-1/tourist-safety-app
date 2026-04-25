@@ -89,6 +89,9 @@ export default function DashboardSettingsPage() {
         full_name: touristData.full_name || "",
         phone_number: touristData.phone_number || "",
         preferred_language: touristData.preferred_language || "English",
+        destination: touristData.destination || "",
+        trip_start: touristData.trip_start_date || "",
+        trip_end: touristData.trip_end_date || "",
       });
       setLinkedDeviceId(touristData.device_id ?? null);
     }
