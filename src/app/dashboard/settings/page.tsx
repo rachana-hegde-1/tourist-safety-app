@@ -83,11 +83,22 @@ export default function DashboardSettingsPage() {
   } = useBluetoothWearable();
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    // Populate simple profile data immediately from the robust touristData hook
+    if (touristData) {
+      setProfileData({
+        full_name: touristData.full_name || "",
+        phone_number: touristData.phone_number || "",
+        preferred_language: touristData.preferred_language || "English",
+      });
+      setLinkedDeviceId(touristData.device_id ?? null);
+    }
+
+    const fetchContacts = async () => {
       try {
         const response = await fetch("/api/tourist/profile");
         const json = await response.json();
 
+<<<<<<< HEAD
         if (!response.ok || json.ok === false) {
           toast.error("Unable to load profile settings.", {
             style: { color: "white", backgroundColor: "#ef4444" }
@@ -117,11 +128,25 @@ export default function DashboardSettingsPage() {
         toast.error("Failed to load profile settings.", {
           style: { color: "white", backgroundColor: "#ef4444" }
         });
+=======
+        if (response.ok && json.ok !== false) {
+          setEmergencyContacts(
+            (json.emergencyContacts ?? []).map((contact: EmergencyContactResponse) => ({
+              id: contact.id,
+              name: contact.name,
+              phone: contact.phone_number,
+              relationship: contact.relationship,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error(error);
+>>>>>>> 961caf2ced448215c8e2c3859ea290a0e661bf53
       }
     };
 
-    fetchProfile();
-  }, []);
+    fetchContacts();
+  }, [touristData]);
 
   const handleAddContact = () => {
     if (newContact.name && newContact.phone && newContact.relationship) {

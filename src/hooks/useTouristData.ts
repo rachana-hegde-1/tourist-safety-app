@@ -19,6 +19,7 @@ interface TouristData {
   device_id?: string;
   id_type?: string;
   digital_id_hash?: string;
+  preferred_language?: string;
   // Add other fields as needed
 }
 
