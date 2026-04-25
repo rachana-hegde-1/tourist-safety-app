@@ -44,6 +44,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
     }
 
+    // --- AI Anomaly Detection Trigger ---
+    try {
+      const { data: recentLocations } = await supabase
+        .from("locations")
+        .select("*")
+        .eq("clerk_user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      // We need at least a few points to detect an anomaly pattern
+      if (recentLocations && recentLocations.length > 2) {
+        // Fire asynchronously to not block the location POST response
+        import("@/lib/anomaly-detection").then(({ analyzeLocationHistory }) => {
+          analyzeLocationHistory(recentLocations).then(async (anomalyAnalysis) => {
+            // Consider anomaly only if high confidence
+            if (anomalyAnalysis && anomalyAnalysis.isAnomaly && anomalyAnalysis.confidence > 80) {
+              await supabase.from("alerts").insert({
+                clerk_user_id: userId,
+                type: "panic",
+                message: `AI Anomaly Detected: ${anomalyAnalysis.reason}`,
+                status: "OPEN",
+                latitude,
+                longitude,
+                source: source || "app",
+                created_at: new Date().toISOString(),
+              });
+            }
+          }).catch((err) => console.error("Error running async AI analysis", err));
+        }).catch((err) => console.error("Failed to import anomaly-detection utility", err));
+      }
+    } catch (err) {
+      console.error("Anomaly detection DB query failed", err);
+    }
+    // ------------------------------------
+
     return NextResponse.json({ ok: true, clerk_user_id: userId }, { headers: securityHeaders });
   } catch {
     return NextResponse.json(
