@@ -5,23 +5,25 @@ import { createSupabaseAdminClient } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const supabase = createSupabaseAdminClient();
     
-    // Verify tourist exists
+    // Verify tourist exists and get UUID 'id'
     const { data: tourist, error: touristError } = await supabase
       .from("tourists")
-      .select("clerk_user_id")
-      .eq("clerk_user_id", userId)
+      .select("id")
+      .eq("clerk_user_id", clerkUserId)
       .maybeSingle();
 
     if (touristError || !tourist) {
-      return NextResponse.json({ error: "Tourist profile not found" }, { status: 404 });
+      return NextResponse.json({ error: "Tourist profile not found. Please complete onboarding first." }, { status: 404 });
     }
+
+    const touristId = tourist.id;
 
     const token = crypto.randomUUID().replace(/-/g, "");
     const createdAt = new Date();
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(request.url).origin;
 
     const { error: insertError } = await supabase.from("tracking_links").insert({
-      tourist_id: userId,
+      tourist_id: touristId,
       token,
       created_at: createdAt.toISOString(),
       expires_at: expiresAt.toISOString(),
