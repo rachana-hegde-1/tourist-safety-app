@@ -146,6 +146,39 @@ export async function POST(
       );
     }
 
+    // --- AI Anomaly Detection Trigger ---
+    try {
+      const { data: recentLocations } = await supabase
+        .from("locations")
+        .select("*")
+        .eq("clerk_user_id", wearable.linked_user_id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (recentLocations && recentLocations.length > 2) {
+        import("@/lib/anomaly-detection").then(({ analyzeLocationHistory }) => {
+          analyzeLocationHistory(recentLocations).then(async (anomalyAnalysis) => {
+            if (anomalyAnalysis && anomalyAnalysis.isAnomaly && anomalyAnalysis.confidence > 80) {
+              await supabase.from("alerts").insert({
+                clerk_user_id: wearable.linked_user_id,
+                type: "panic",
+                message: `AI Anomaly Detected (Wearable Data): ${anomalyAnalysis.reason}`,
+                status: "OPEN",
+                latitude,
+                longitude,
+                source: "wearable",
+                device_id: deviceId,
+                created_at: new Date().toISOString(),
+              });
+            }
+          }).catch((err) => console.error("Error analyzing AI Anomaly", err));
+        }).catch((err) => console.error("Failed to import anomaly-detection utility", err));
+      }
+    } catch (err) {
+      console.error("Anomaly detection DB query failed", err);
+    }
+    // ------------------------------------
+
     // Helper function to create alerts
     const createAlert = async (type: string, message?: string) => {
       const { error: alertError } = await supabase
