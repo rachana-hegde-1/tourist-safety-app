@@ -23,15 +23,15 @@ export default function DashboardSharePage() {
       const response = await fetch("/api/tracking-links/create", { method: "POST" });
       const json = await response.json();
 
-      if (!response.ok || !json.ok || !json.full_url) {
-        throw new Error(json.reason || "Failed to create tracking link");
+      if (!response.ok || !json.success || !json.url) {
+        throw new Error(json.error || "Failed to create tracking link");
       }
 
-      setTrackingUrl(json.full_url);
+      setTrackingUrl(json.url);
       setExpiresAt(json.expires_at ?? null);
       
       try {
-        const qrUrl = await QRCode.toDataURL(json.full_url);
+        const qrUrl = await QRCode.toDataURL(json.url);
         setQrCodeDataUrl(qrUrl);
       } catch (qrErr) {
         console.error("Failed to generate QR data URL", qrErr);
