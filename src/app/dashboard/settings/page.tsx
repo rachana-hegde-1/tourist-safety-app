@@ -25,6 +25,9 @@ interface ProfileData {
   full_name: string;
   phone_number: string;
   preferred_language: string;
+  destination: string;
+  trip_start: string;
+  trip_end: string;
 }
 
 interface EmergencyContactResponse {
@@ -59,6 +62,9 @@ export default function DashboardSettingsPage() {
     full_name: "",
     phone_number: "",
     preferred_language: "",
+    destination: "",
+    trip_start: "",
+    trip_end: "",
   });
   const [deviceIdInput, setDeviceIdInput] = useState("");
   const [linkedDeviceId, setLinkedDeviceId] = useState<string | null>(null);
@@ -83,7 +89,9 @@ export default function DashboardSettingsPage() {
         const json = await response.json();
 
         if (!response.ok || json.ok === false) {
-          toast.error("Unable to load profile settings.");
+          toast.error("Unable to load profile settings.", {
+            style: { color: "white", backgroundColor: "#ef4444" }
+          });
           return;
         }
 
@@ -91,6 +99,9 @@ export default function DashboardSettingsPage() {
           full_name: json.profile?.full_name || "",
           phone_number: json.profile?.phone_number || "",
           preferred_language: json.profile?.preferred_language || "English",
+          destination: json.profile?.destination || "",
+          trip_start: json.profile?.trip_start_date || "",
+          trip_end: json.profile?.trip_end_date || "",
         });
         setLinkedDeviceId(json.profile?.device_id ?? null);
         setEmergencyContacts(
@@ -103,7 +114,9 @@ export default function DashboardSettingsPage() {
         );
       } catch (error) {
         console.error(error);
-        toast.error("Failed to load profile settings.");
+        toast.error("Failed to load profile settings.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
       }
     };
 
@@ -115,16 +128,22 @@ export default function DashboardSettingsPage() {
       setEmergencyContacts([...emergencyContacts, { ...newContact, id: `${Date.now()}` }]);
       setNewContact({ name: "", phone: "", relationship: "" });
       setIsEditingContacts(false);
-      toast.success("Emergency contact added. Click 'Save Contacts' to persist changes.");
+      toast.success("Emergency contact added locally.", {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
     } else {
-      toast.error("Please fill all contact fields");
+      toast.error("Please fill all contact fields", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     }
   };
 
   const handleRemoveContact = (id?: number | string) => {
     if (!id) return;
     setEmergencyContacts(emergencyContacts.filter(contact => contact.id !== id));
-    toast.success("Emergency contact removed. Click 'Save Contacts' to persist changes.");
+    toast.success("Emergency contact removed locally.", {
+      style: { color: "white", backgroundColor: "#22c55e" }
+    });
   };
 
   const handleSaveEmergencyContacts = async () => {
@@ -145,14 +164,20 @@ export default function DashboardSettingsPage() {
 
       const json = await response.json();
       if (!response.ok || !json.ok) {
-        toast.error(json.error || "Failed to save emergency contacts.");
+        toast.error(json.error || "Failed to save emergency contacts.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
         return;
       }
 
-      toast.success("Emergency contacts saved successfully");
+      toast.success("Settings saved successfully", {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save emergency contacts.");
+      toast.error("Failed to save emergency contacts.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     } finally {
       setIsUpdatingContacts(false);
     }
@@ -162,7 +187,9 @@ export default function DashboardSettingsPage() {
     setIsUpdatingProfile(true);
 
     if (!profileData.full_name || !profileData.phone_number || !profileData.preferred_language) {
-      toast.error("Full name, phone number, and language are required.");
+      toast.error("Full name, phone number, and language are required.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
       setIsUpdatingProfile(false);
       return;
     }
@@ -174,20 +201,29 @@ export default function DashboardSettingsPage() {
         body: JSON.stringify({
           full_name: profileData.full_name,
           phone: profileData.phone_number,
+          destination: profileData.destination,
+          trip_start: profileData.trip_start,
+          trip_end: profileData.trip_end,
           preferred_language: profileData.preferred_language,
         }),
       });
 
       const json = await response.json();
       if (!response.ok || !json.ok) {
-        toast.error(json.error || "Failed to save profile settings.");
+        toast.error(json.error || "Failed to save profile settings.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
         return;
       }
 
-      toast.success("Settings saved successfully");
+      toast.success("Settings saved successfully", {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update settings.");
+      toast.error("Failed to update settings.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -196,7 +232,9 @@ export default function DashboardSettingsPage() {
   const verifyDevice = async () => {
     const trimmedDeviceId = deviceIdInput.trim();
     if (!trimmedDeviceId) {
-      toast.error("Enter a device ID to verify.");
+      toast.error("Enter a device ID to verify.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
       return;
     }
 
@@ -210,29 +248,39 @@ export default function DashboardSettingsPage() {
       if (!res.ok || json.ok === false) {
         setVerifyStatus("unavailable");
         setVerifyReason(json.reason ?? "verification_failed");
-        toast.error("Wearable verification failed.");
+        toast.error("Wearable verification failed.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
         return;
       }
 
       if (json.available) {
         setVerifyStatus("available");
-        toast.success("Wearable is available for linking.");
+        toast.success("Wearable is available for linking.", {
+          style: { color: "white", backgroundColor: "#22c55e" }
+        });
       } else {
         setVerifyStatus("unavailable");
         setVerifyReason(json.reason ?? "unavailable");
-        toast.error("This wearable cannot be linked.");
+        toast.error("This wearable cannot be linked.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
       }
     } catch {
       setVerifyStatus("unavailable");
       setVerifyReason("network_error");
-      toast.error("Failed to verify wearable.");
+      toast.error("Failed to verify wearable.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     }
   };
 
   const linkDevice = async () => {
     const trimmedDeviceId = deviceIdInput.trim();
     if (!trimmedDeviceId) {
-      toast.error("Enter a device ID to link.");
+      toast.error("Enter a device ID to link.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
       return;
     }
 
@@ -246,16 +294,22 @@ export default function DashboardSettingsPage() {
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
-        toast.error(json.error || "Failed to link wearable device.");
+        toast.error(json.error || "Failed to link wearable device.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
         return;
       }
 
       setLinkedDeviceId(trimmedDeviceId);
       setVerifyStatus("available");
-      toast.success("Wearable linked successfully.");
+      toast.success("Settings saved successfully", {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
     } catch (error) {
       console.error("Link device error:", error);
-      toast.error("Unable to link wearable device.");
+      toast.error("Unable to link wearable device.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     } finally {
       setIsLinkingDevice(false);
     }
@@ -263,7 +317,9 @@ export default function DashboardSettingsPage() {
 
   const handleConnectBluetooth = async () => {
     if (!bleSupported) {
-      toast.error("Bluetooth is not supported by this browser.");
+      toast.error("Bluetooth is not supported by this browser.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
       return;
     }
 
@@ -272,9 +328,13 @@ export default function DashboardSettingsPage() {
       setDeviceIdInput(deviceId);
       setVerifyStatus("idle");
       setVerifyReason(null);
-      toast.success("Wearable discovered via Bluetooth. Device ID has been filled.");
+      toast.success("Wearable discovered via Bluetooth.", {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
     } catch {
-      toast.error("Failed to connect to wearable via Bluetooth.");
+      toast.error("Failed to connect via Bluetooth.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
     }
   };
 
@@ -361,6 +421,35 @@ export default function DashboardSettingsPage() {
                     onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
                     placeholder="Enter your phone number"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Primary Destination</Label>
+                  <Input
+                    id="destination"
+                    value={profileData.destination}
+                    onChange={(e) => setProfileData({ ...profileData, destination: e.target.value })}
+                    placeholder="e.g. New Delhi, Goa"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="tripStart">Trip Start</Label>
+                    <Input
+                      id="tripStart"
+                      type="date"
+                      value={profileData.trip_start}
+                      onChange={(e) => setProfileData({ ...profileData, trip_start: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tripEnd">Trip End</Label>
+                    <Input
+                      id="tripEnd"
+                      type="date"
+                      value={profileData.trip_end}
+                      onChange={(e) => setProfileData({ ...profileData, trip_end: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">

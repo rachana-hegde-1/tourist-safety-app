@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     const { deviceId } = parsed.data;
     const supabase = createSupabaseAdminClient();
 
-    // First get the tourist's Supabase ID
+    // First check if the tourist exists
     const { data: tourist, error: touristError } = await supabase
       .from("tourists")
-      .select("id")
+      .select("clerk_user_id")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -56,35 +56,40 @@ export async function POST(request: NextRequest) {
     // Find the wearable device
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("id, device_id, linked_user_id, is_active")
+      .select("device_id, linked_user_id, status")
       .eq("device_id", deviceId)
-      .single();
+      .maybeSingle();
 
-    if (wearableError || !wearable) {
+    if (wearableError) {
+      console.error("Wearable query error:", wearableError);
+      return NextResponse.json({ 
+        ok: false, 
+        error: "Database error checking wearable" 
+      }, { status: 500 });
+    }
+
+    if (!wearable) {
       return NextResponse.json({ 
         ok: false, 
         error: "Device ID not found" 
       }, { status: 404 });
     }
 
-    if (wearable.linked_user_id) {
+    if (wearable.linked_user_id && wearable.linked_user_id !== userId) {
       return NextResponse.json({ 
         ok: false, 
         error: "Wearable already linked to another user" 
       }, { status: 400 });
     }
 
-    if (!wearable.is_active) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: "Wearable is inactive and cannot be linked" 
-      }, { status: 400 });
-    }
-
-    // Link the wearable to the tourist using the tourist's Supabase ID
+    // Link the wearable to the tourist
     const { error: linkError } = await supabase
       .from("wearables")
-      .update({ linked_user_id: tourist.id })
+      .update({ 
+        linked_user_id: userId,
+        status: 'linked',
+        updated_at: new Date().toISOString()
+      })
       .eq("device_id", deviceId);
 
     if (linkError) {
@@ -98,7 +103,10 @@ export async function POST(request: NextRequest) {
     // Update tourist profile with device ID
     const { error: updateTouristError } = await supabase
       .from("tourists")
-      .update({ device_id: deviceId })
+      .update({ 
+        device_id: deviceId,
+        updated_at: new Date().toISOString()
+      })
       .eq("clerk_user_id", userId);
 
     if (updateTouristError) {

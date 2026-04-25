@@ -27,7 +27,7 @@ export async function GET() {
   const [{ data: tourist, error: touristError }, { data: contacts, error: contactsError }] = await Promise.all([
     supabase
       .from("tourists")
-      .select("full_name, phone_number, preferred_language, device_id")
+      .select("full_name, phone_number, preferred_language, device_id, destination, trip_start_date, trip_end_date")
       .eq("clerk_user_id", userId)
       .maybeSingle(),
     supabase

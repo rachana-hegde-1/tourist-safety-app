@@ -43,8 +43,8 @@ export async function PATCH(request: Request) {
         full_name, 
         phone_number: phone,
         destination,
-        trip_start,
-        trip_end,
+        trip_start_date: trip_start,
+        trip_end_date: trip_end,
         preferred_language,
         updated_at: new Date().toISOString() 
       })
