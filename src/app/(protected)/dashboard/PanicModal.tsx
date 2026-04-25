@@ -17,31 +17,30 @@ type Props = {
 type Phase = "confirm" | "countdown" | "done";
 
 export function PanicModal({ open, onOpenChange, currentLocation, onTriggered }: Props) {
-  const [phase, setPhase] = React.useState<Phase>("confirm");
-  const [seconds, setSeconds] = React.useState(3);
+  // const [phase, setPhase] = React.useState<Phase>("confirm");
+  // const [seconds, setSeconds] = React.useState(3);
   const [isPosting, setIsPosting] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) {
-      setPhase("confirm");
-      setSeconds(3);
+      // setPhase("confirm");
+      // setSeconds(3);
       setIsPosting(false);
     }
   }, [open]);
 
-  React.useEffect(() => {
-    if (phase !== "countdown") return;
-    if (seconds <= 0) return;
-    const id = window.setTimeout(() => setSeconds((s) => s - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [phase, seconds]);
+  // React.useEffect(() => {
+  //   if (phase !== "countdown") return;
+  //   if (seconds <= 0) return;
+  //   const id = window.setTimeout(() => setSeconds((s) => s - 1), 1000);
+  //   return () => window.clearTimeout(id);
+  // }, [phase, seconds]);
 
-  React.useEffect(() => {
-    if (phase !== "countdown") return;
-    if (seconds > 0) return;
-    // void trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, seconds]);
+  // React.useEffect(() => {
+  //   if (phase !== "countdown") return;
+  //   if (seconds > 0) return;
+  //   // No need for trigger() or phase/seconds in this simplified modal
+  // }, [phase, seconds]);
 
   async function handlePanicConfirm() {
     if (isPosting) return;
