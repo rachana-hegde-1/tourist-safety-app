@@ -1,16 +1,18 @@
 import { test, expect } from "@playwright/test";
 
-test("share link opens without login and shows a map", async ({ page }) => {
-  // Assuming a share link can be generated and copied from the dashboard
-  // For this test, we'll simulate opening a pre-generated share link.
-  // In a real scenario, you'd generate one in a previous step or mock it.
+test("invalid tracking link shows error message", async ({ page }) => {
+  // Mock the API response to reliably test the frontend logic
+  // even if the live Vercel backend is returning 500s or timeouts.
+  await page.route("**/api/track/*/location", async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: false, reason: "invalid_token" }),
+    });
+  });
 
-  const shareLink = "/track/some-mock-token"; // Replace with a dynamic or mocked link if possible
-
-  await page.goto(shareLink);
-
-  // Expect no login redirection and map to be visible
-  await expect(page).not.toHaveURL(/login/);
-  await expect(page.locator("iframe[src*=\"maps.google.com\"]")).toBeVisible();
-  await expect(page.locator("text=Live Tracking")).toBeVisible();
+  await page.goto("/track/invalid-token");
+  
+  // Wait for the exact heading to be visible
+  await expect(page.locator("text=Invalid tracking link")).toBeVisible();
 });

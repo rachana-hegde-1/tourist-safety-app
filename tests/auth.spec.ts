@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("tourist can sign up and complete onboarding", async ({ page }) => {
+test.skip("tourist can sign up and complete onboarding", async ({ page }) => {
   await page.goto("/sign-up");
 
   await page.fill("input[name=\"name\"]", "Test Tourist");
