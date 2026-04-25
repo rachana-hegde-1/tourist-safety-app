@@ -28,7 +28,8 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
+    console.error("Tracking_links Insert Error:", error);
+    return NextResponse.json({ ok: false, reason: error.message }, { status: 500 });
   }
 
   return NextResponse.json({

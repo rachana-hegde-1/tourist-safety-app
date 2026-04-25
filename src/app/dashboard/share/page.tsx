@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Link, Copy, MessageSquare, QrCode, Shield } from "lucide-react";
+import { Share2, Link, Copy, MessageSquare, QrCode, Shield, Download } from "lucide-react";
 import { useTouristData } from "@/hooks/useTouristData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { toast } from "sonner";
+import QRCode from "qrcode";
+import Image from "next/image";
 
 export default function DashboardSharePage() {
   const { touristData, isLoading, isRedirecting, error } = useTouristData();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 
   const handleGenerateLink = async () => {
     setIsGeneratingLink(true);
@@ -26,9 +29,18 @@ export default function DashboardSharePage() {
 
       setTrackingUrl(json.full_url);
       setExpiresAt(json.expires_at ?? null);
+      
+      try {
+        const qrUrl = await QRCode.toDataURL(json.full_url);
+        setQrCodeDataUrl(qrUrl);
+      } catch (qrErr) {
+        console.error("Failed to generate QR data URL", qrErr);
+      }
+
       toast.success("Tracking link generated successfully!");
-    } catch {
-      toast.error("Failed to generate tracking link.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to generate tracking link.");
     } finally {
       setIsGeneratingLink(false);
     }
@@ -48,6 +60,14 @@ export default function DashboardSharePage() {
     if (!trackingUrl) return;
     const message = `Live tourist tracking link: ${trackingUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleDownloadQR = () => {
+    if (!qrCodeDataUrl) return;
+    const link = document.createElement('a');
+    link.download = 'live-tracking-qr.png';
+    link.href = qrCodeDataUrl;
+    link.click();
   };
 
   if (isLoading || isRedirecting) {
@@ -126,12 +146,28 @@ export default function DashboardSharePage() {
               </div>
               <Button onClick={handleGenerateLink} disabled={isGeneratingLink}>
                 <QrCode className="mr-2 h-4 w-4" />
-                {isGeneratingLink ? "Generating..." : "Generate Link"}
+                {isGeneratingLink ? "Generating..." : "Generate Link & QR"}
               </Button>
             </div>
 
             {trackingUrl && (
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {qrCodeDataUrl && (
+                  <div className="bg-white border-2 border-gray-200 rounded-lg p-6 text-center max-w-sm mx-auto">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Scan to Track</h3>
+                    <Image 
+                      src={qrCodeDataUrl} 
+                      alt="Live Tracking QR Code" 
+                      width={192}
+                      height={192}
+                      className="w-48 h-48 mx-auto mb-4"
+                    />
+                    <Button variant="outline" onClick={handleDownloadQR} className="w-full">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download QR
+                    </Button>
+                  </div>
+                )}
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 break-all text-sm text-slate-700">
                   {trackingUrl}
                 </div>
