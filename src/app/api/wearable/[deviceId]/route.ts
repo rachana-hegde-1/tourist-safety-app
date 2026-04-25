@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -42,10 +42,25 @@ const getRateLimit = () => {
   return rateLimiter;
 };
 
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Device-Secret',
+    },
+  });
+}
+
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ deviceId: string }> }
 ) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+  };
+
   try {
     const { deviceId } = await params;
     
@@ -54,7 +69,10 @@ export async function POST(
     if (!deviceIdValidation.success) {
       return NextResponse.json(
         { error: "Invalid device ID format" },
-        { status: 400, headers: securityHeaders }
+        { 
+          status: 400, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -63,7 +81,10 @@ export async function POST(
     if (!deviceSecret) {
       return NextResponse.json(
         { error: "Device secret required" },
-        { status: 401, headers: securityHeaders }
+        { 
+          status: 401, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -72,7 +93,10 @@ export async function POST(
     if (deviceSecret !== expectedSecret) {
       return NextResponse.json(
         { error: "Invalid device secret" },
-        { status: 401, headers: securityHeaders }
+        { 
+          status: 401, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -87,6 +111,7 @@ export async function POST(
           status: 429, 
           headers: {
             ...securityHeaders,
+            ...corsHeaders,
             'X-RateLimit-Limit': String(limit),
             'X-RateLimit-Remaining': String(remaining),
             'X-RateLimit-Reset': new Date(reset).toISOString(),
@@ -102,7 +127,10 @@ export async function POST(
     if (!bodyValidation.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: bodyValidation.error.issues },
-        { status: 400, headers: securityHeaders }
+        { 
+          status: 400, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -113,14 +141,17 @@ export async function POST(
     // Check if wearable exists and is linked
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("device_id, linked_user_id, is_active")
+      .select("device_id, linked_user_id, status")
       .eq("device_id", deviceId)
       .single();
 
-    if (wearableError || !wearable || !wearable.is_active || !wearable.linked_user_id) {
+    if (wearableError || !wearable || wearable.status !== "linked" || !wearable.linked_user_id) {
       return NextResponse.json(
         { error: "Wearable device not found or not linked" },
-        { status: 404, headers: securityHeaders }
+        { 
+          status: 404, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -129,20 +160,21 @@ export async function POST(
       .from("locations")
       .insert({
         clerk_user_id: wearable.linked_user_id,
-        user_id: wearable.linked_user_id,
         latitude,
         longitude,
-        timestamp: new Date().toISOString(),
-        created_at: new Date().toISOString(),
         source: "wearable",
         device_id: deviceId,
+        created_at: new Date().toISOString(),
       });
 
     if (locationError) {
       console.error("Location insertion error:", locationError);
       return NextResponse.json(
         { error: "Failed to save location data" },
-        { status: 500, headers: securityHeaders }
+        { 
+          status: 500, 
+          headers: { ...securityHeaders, ...corsHeaders } 
+        }
       );
     }
 
@@ -185,13 +217,12 @@ export async function POST(
         .from("alerts")
         .insert({
           clerk_user_id: wearable.linked_user_id,
-          type,
+          type: type.toUpperCase(),
           latitude,
           longitude,
-          timestamp: new Date().toISOString(),
-          device_id: deviceId,
           status: "OPEN",
           message: message || `${type} detected from wearable device`,
+          created_at: new Date().toISOString(),
         });
 
       if (alertError) {
@@ -201,15 +232,15 @@ export async function POST(
 
     // Create alerts based on data
     if (sos_triggered) {
-      await createAlert("panic", "SOS button activated on wearable device");
+      await createAlert("PANIC", "SOS button activated on wearable device");
     }
 
     if (fall_detected) {
-      await createAlert("fall", "Fall detected by wearable device");
+      await createAlert("FALL_DETECTED", "Fall detected by wearable device");
     }
 
     if (low_battery) {
-      await createAlert("low_battery", `Low battery detected: ${battery_level}%`);
+      await createAlert("LOW_BATTERY", `Low battery detected: ${battery_level}%`);
     }
 
     return NextResponse.json(
@@ -230,6 +261,7 @@ export async function POST(
         status: 200,
         headers: {
           ...securityHeaders,
+          ...corsHeaders,
           'X-RateLimit-Limit': String(limit),
           'X-RateLimit-Remaining': String(remaining),
           'X-RateLimit-Reset': new Date(reset).toISOString(),
@@ -241,7 +273,10 @@ export async function POST(
     console.error("Wearable API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500, headers: securityHeaders }
+      { 
+        status: 500, 
+        headers: { ...securityHeaders, ...corsHeaders } 
+      }
     );
   }
 }

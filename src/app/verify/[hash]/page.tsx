@@ -4,13 +4,13 @@ import { createSupabaseAdminClient } from "@/lib/supabase";
 import { VerificationClient } from "./VerificationClient";
 
 interface VerifyPageProps {
-  params: {
+  params: Promise<{
     hash: string;
-  };
+  }>;
 }
 
 export default async function VerifyPage({ params }: VerifyPageProps) {
-  const { hash } = params;
+  const { hash } = await params;
 
   if (!hash || hash.length !== 64) {
     notFound();
