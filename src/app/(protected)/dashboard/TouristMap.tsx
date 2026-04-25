@@ -145,7 +145,7 @@ export default function TouristMap({ onLocation }: Props) {
       accuracy: displayedLocation.accuracy,
       timestamp: displayedLocation.timestamp,
     });
-  }, [displayedLocation, onLocation]);
+  }, [displayedLocation, onLocation, user?.id]);
 
   // “Update every 15 seconds” — keep the map view/tiles healthy even if
   // watchPosition doesn't fire frequently.

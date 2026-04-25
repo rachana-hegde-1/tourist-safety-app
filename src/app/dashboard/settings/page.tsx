@@ -52,6 +52,7 @@ export default function DashboardSettingsPage() {
   const { touristData, isLoading, isRedirecting, error } = useTouristData();
   const [isEditingContacts, setIsEditingContacts] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUpdatingContacts, setIsUpdatingContacts] = useState(false);
   const [newContact, setNewContact] = useState<EmergencyContact>({ name: "", phone: "", relationship: "" });
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -113,7 +114,8 @@ export default function DashboardSettingsPage() {
     if (newContact.name && newContact.phone && newContact.relationship) {
       setEmergencyContacts([...emergencyContacts, { ...newContact, id: `${Date.now()}` }]);
       setNewContact({ name: "", phone: "", relationship: "" });
-      toast.success("Emergency contact added successfully");
+      setIsEditingContacts(false);
+      toast.success("Emergency contact added. Click 'Save Contacts' to persist changes.");
     } else {
       toast.error("Please fill all contact fields");
     }
@@ -122,7 +124,38 @@ export default function DashboardSettingsPage() {
   const handleRemoveContact = (id?: number | string) => {
     if (!id) return;
     setEmergencyContacts(emergencyContacts.filter(contact => contact.id !== id));
-    toast.success("Emergency contact removed");
+    toast.success("Emergency contact removed. Click 'Save Contacts' to persist changes.");
+  };
+
+  const handleSaveEmergencyContacts = async () => {
+    setIsUpdatingContacts(true);
+
+    try {
+      const response = await fetch("/api/emergency-contacts/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contacts: emergencyContacts.map((contact) => ({
+            name: contact.name,
+            phone: contact.phone,
+            relationship: contact.relationship,
+          })),
+        }),
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.ok) {
+        toast.error(json.error || "Failed to save emergency contacts.");
+        return;
+      }
+
+      toast.success("Emergency contacts saved successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save emergency contacts.");
+    } finally {
+      setIsUpdatingContacts(false);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -135,31 +168,26 @@ export default function DashboardSettingsPage() {
     }
 
     try {
-      const response = await fetch("/api/tourist/profile", {
+      const response = await fetch("/api/tourists/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: profileData.full_name,
-          phone_number: profileData.phone_number,
+          phone: profileData.phone_number,
           preferred_language: profileData.preferred_language,
-          emergency_contacts: emergencyContacts.map((contact) => ({
-            name: contact.name,
-            phone_number: contact.phone,
-            relationship: contact.relationship,
-          })),
         }),
       });
 
       const json = await response.json();
-      if (!response.ok || json.ok === false) {
-        toast.error("Failed to save profile settings.");
+      if (!response.ok || !json.ok) {
+        toast.error(json.error || "Failed to save profile settings.");
         return;
       }
 
-      toast.success("Profile updated successfully");
+      toast.success("Settings saved successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update profile.");
+      toast.error("Failed to update settings.");
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -217,15 +245,16 @@ export default function DashboardSettingsPage() {
       });
       const json = await res.json();
 
-      if (!res.ok || json.ok === false) {
-        toast.error(json.error ?? "Failed to link wearable device.");
+      if (!res.ok || !json.ok) {
+        toast.error(json.error || "Failed to link wearable device.");
         return;
       }
 
       setLinkedDeviceId(trimmedDeviceId);
       setVerifyStatus("available");
       toast.success("Wearable linked successfully.");
-    } catch {
+    } catch (error) {
+      console.error("Link device error:", error);
       toast.error("Unable to link wearable device.");
     } finally {
       setIsLinkingDevice(false);
@@ -454,6 +483,18 @@ export default function DashboardSettingsPage() {
                       </Button>
                     </div>
                   ))
+                )}
+                {emergencyContacts.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={handleSaveEmergencyContacts} 
+                      disabled={isUpdatingContacts}
+                      className="w-full"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isUpdatingContacts ? "Saving..." : "Save Contacts"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>

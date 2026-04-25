@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const TouristMap = dynamic(() => import("./TouristMap"), {
   ssr: false,
@@ -29,6 +30,7 @@ export function DashboardClient(props: {
   wearableDeviceId?: string | null;
   initialAlerts: AlertRow[];
 }) {
+  const router = useRouter();
   const [alerts, setAlerts] = React.useState<AlertRow[]>(props.initialAlerts);
   const [panicOpen, setPanicOpen] = React.useState(false);
   const [shareLink, setShareLink] = React.useState<string | null>(null);
@@ -97,7 +99,7 @@ export function DashboardClient(props: {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl">
+      <div className="max-w-6xl space-y-4">
         {/* Top bar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
