@@ -38,8 +38,9 @@ export default function DashboardSharePage() {
       }
 
       toast.success("Tracking link generated successfully!");
-    } catch {
-      toast.error("Failed to generate tracking link.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to generate tracking link.");
     } finally {
       setIsGeneratingLink(false);
     }
