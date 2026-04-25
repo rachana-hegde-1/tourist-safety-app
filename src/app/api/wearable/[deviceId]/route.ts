@@ -55,14 +55,14 @@ export async function OPTIONS() {
 
 export async function POST(
   request: Request,
-  { params }: { params: { deviceId: string } }
+  { params }: { params: Promise<{ deviceId: string }> }
 ) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
   };
 
   try {
-    const { deviceId } = params;
+    const { deviceId } = await params;
     
     // Validate device ID
     const deviceIdValidation = DeviceIdSchema.safeParse(deviceId);
