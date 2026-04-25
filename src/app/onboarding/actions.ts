@@ -171,7 +171,7 @@ export async function submitOnboarding(formData: FormData) {
     const { error: deleteError } = await supabase
       .from("emergency_contacts")
       .delete()
-      .eq("clerk_user_id", userId);
+      .eq("tourist_id", userId);
 
     if (deleteError) {
       console.error("[Onboarding] Delete emergency contacts error:", deleteError);
@@ -180,9 +180,9 @@ export async function submitOnboarding(formData: FormData) {
     } else {
       const { error: insertError } = await supabase.from("emergency_contacts").insert(
         emergencyContacts.map((c) => ({
-          clerk_user_id: userId,
+          tourist_id: userId,
           name: c.name,
-          phone_number: c.phone,
+          phone: c.phone,
           relationship: c.relationship,
         })),
       );

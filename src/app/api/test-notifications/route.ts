@@ -5,7 +5,7 @@ import { smsService } from "@/lib/smsService";
 
 interface TestContact {
   name: string;
-  phone_number: string;
+  phone: string;
   email: string;
   relationship: string;
 }
@@ -14,7 +14,7 @@ interface TestTourist {
   tourist_id: string;
   full_name: string;
   email: string;
-  phone_number: string;
+  phone: string;
   clerk_user_id: string;
   emergency_contacts: TestContact[];
   trip_start_date: string;
@@ -76,18 +76,18 @@ export async function POST(request: NextRequest) {
         tourist_id: "test-tourist-123",
         full_name: "Test Tourist",
         email: "test@example.com",
-        phone_number: "+919876543210",
+        phone: "+919876543210",
         clerk_user_id: "test-user-123",
         emergency_contacts: [
           {
             name: "Emergency Contact 1",
-            phone_number: "+919876543211",
+            phone: "+919876543211",
             email: "emergency1@example.com",
             relationship: "Spouse"
           },
           {
             name: "Emergency Contact 2",
-            phone_number: "+919876543212",
+            phone: "+919876543212",
             email: "emergency2@example.com",
             relationship: "Parent"
           }
@@ -219,7 +219,7 @@ async function testSMSNotifications(tourist: TestTourist, testResults: TestResul
     testResults.results.sms = {
       success: true,
       message: "Panic alert SMS sent successfully",
-      recipients: tourist.emergency_contacts.map((c) => c.phone_number),
+      recipients: tourist.emergency_contacts.map((c) => c.phone),
     };
   } catch (error) {
     testResults.results.sms = {
@@ -312,7 +312,7 @@ async function testPanicAlert(tourist: TestTourist, testResults: TestResults) {
       alertTime: new Date().toISOString(),
       location: "28.6139, 77.2090 (New Delhi)",
       trackingLink,
-      touristPhone: tourist.phone_number,
+      touristPhone: tourist.phone,
     });
 
     // Test SMS (simulation always available)
@@ -333,7 +333,7 @@ async function testPanicAlert(tourist: TestTourist, testResults: TestResults) {
       sms_sent: true,
       recipients: {
         email: tourist.emergency_contacts.map((c) => c.email),
-        sms: tourist.emergency_contacts.map((c) => c.phone_number),
+        sms: tourist.emergency_contacts.map((c) => c.phone),
       },
     };
   } catch (error) {
@@ -362,7 +362,7 @@ async function testGeoFenceAlert(tourist: TestTourist, testResults: TestResults)
       currentLocation: "28.6139, 77.2090 (New Delhi)",
       safeZone: "India Gate Area",
       trackingLink,
-      touristPhone: tourist.phone_number,
+      touristPhone: tourist.phone,
     });
 
     testResults.results.geo_fence_alert = {
@@ -385,7 +385,7 @@ async function testDailySummary(tourist: TestTourist, testResults: TestResults) 
       touristName: tourist.full_name,
       safetyScore: 85,
       activityCount: 15,
-      phone: tourist.phone_number,
+      phone: tourist.phone,
       email: tourist.email,
       date: new Date().toISOString(),
       activeAlerts: [
@@ -398,7 +398,7 @@ async function testDailySummary(tourist: TestTourist, testResults: TestResults) 
       ],
       totalLocations: 15,
       lastLocation: "28.6139, 77.2090 (New Delhi)",
-      emergencyContacts: tourist.emergency_contacts.map(c => ({ name: c.name, phone: c.phone_number })),
+      emergencyContacts: tourist.emergency_contacts.map(c => ({ name: c.name, phone: c.phone })),
     });
 
     testResults.results.daily_summary = {

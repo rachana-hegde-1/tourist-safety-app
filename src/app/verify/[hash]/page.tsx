@@ -23,7 +23,7 @@ export default async function VerifyPage({ params }: VerifyPageProps) {
     .from("tourists")
     .select(`
       *,
-      emergency_contacts(name, phone_number, relationship)
+      emergency_contacts(name, phone, relationship)
     `)
     .eq("digital_id_hash", hash)
     .single();

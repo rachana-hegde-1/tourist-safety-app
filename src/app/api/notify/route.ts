@@ -6,7 +6,7 @@ import { smsService, validateSMSConfig } from "@/lib/smsService";
 interface EmergencyContact {
   name: string;
   email?: string;
-  phone_number?: string;
+  phone?: string;
   relationship?: string;
 }
 
@@ -14,7 +14,7 @@ interface Tourist {
   tourist_id: string;
   full_name: string;
   email: string;
-  phone_number: string;
+  phone: string;
   clerk_user_id: string;
   trip_start_date: string;
   trip_end_date: string;
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         tourists!inner(
           tourist_id,
           full_name,
-          phone_number,
+          phone,
           email,
           trip_start_date,
           trip_end_date,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
           sms_notifications,
           emergency_contacts(
             name,
-            phone_number,
+            phone,
             email,
             relationship
           )
@@ -260,7 +260,7 @@ async function handleEmailNotifications(
           location: `${alert.latitude}, ${alert.longitude}`,
           trackingLink,
           alertTime: alert.timestamp,
-          touristPhone: tourist.phone_number,
+          touristPhone: tourist.phone,
         });
         break;
 
@@ -278,7 +278,7 @@ async function handleEmailNotifications(
           alertTime: alert.timestamp,
           currentLocation: `${alert.latitude}, ${alert.longitude}`,
           safeZone: alert.safe_zone_name || "Safe Zone",
-          touristPhone: tourist.phone_number,
+          touristPhone: tourist.phone,
         });
         break;
 
@@ -288,7 +288,7 @@ async function handleEmailNotifications(
         touristName: tourist.full_name,
         safetyScore: alert.safety_score || 85,
         activityCount: alert.activity_count || 10,
-        phone: tourist.phone_number,
+        phone: tourist.phone,
         email: tourist.email,
       });
       break;
@@ -342,7 +342,7 @@ async function handleSMSNotifications(
         alertType: alert.type,
         location: `${alert.latitude}, ${alert.longitude}`,
         trackingLink,
-        emergencyContacts: emergencyContacts.filter((contact) => contact.phone_number),
+        emergencyContacts: emergencyContacts.filter((contact) => contact.phone),
       });
     }
 

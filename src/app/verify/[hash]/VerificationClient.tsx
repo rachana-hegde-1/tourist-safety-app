@@ -19,7 +19,7 @@ interface TouristData {
   digital_id_qr: string;
   emergency_contacts: Array<{
     name: string;
-    phone_number: string;
+    phone: string;
     relationship: string;
   }>;
 }
@@ -200,7 +200,7 @@ export function VerificationClient({
                 <div key={index} className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900">{contact.name}</h4>
                   <p className="text-sm text-gray-600 mb-1">{contact.relationship}</p>
-                  <p className="text-sm font-medium text-blue-600">{contact.phone_number}</p>
+                  <p className="text-sm font-medium text-blue-600">{contact.phone}</p>
                 </div>
               ))}
             </div>

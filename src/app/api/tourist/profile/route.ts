@@ -32,8 +32,8 @@ export async function GET() {
       .maybeSingle(),
     supabase
       .from("emergency_contacts")
-      .select("id, name, phone_number, relationship")
-      .eq("clerk_user_id", userId)
+      .select("id, name, phone, relationship")
+      .eq("tourist_id", userId)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -48,7 +48,12 @@ export async function GET() {
     {
       ok: true,
       profile: tourist ?? null,
-      emergencyContacts: contacts ?? [],
+      emergencyContacts: (contacts ?? []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        phone_number: c.phone,
+        relationship: c.relationship
+      })),
     },
     { headers: securityHeaders }
   );
@@ -121,16 +126,16 @@ export async function PATCH(request: Request) {
   const { error: deleteError } = await supabase
     .from("emergency_contacts")
     .delete()
-    .eq("clerk_user_id", userId);
+    .eq("tourist_id", userId);
 
   if (deleteError) {
     return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
   }
 
   const formattedContacts = emergency_contacts.map((contact) => ({
-    clerk_user_id: userId,
+    tourist_id: userId,
     name: contact.name,
-    phone_number: contact.phone_number,
+    phone: contact.phone_number,
     relationship: contact.relationship,
   }));
 

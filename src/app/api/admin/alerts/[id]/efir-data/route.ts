@@ -39,8 +39,8 @@ export async function GET(
         .maybeSingle(),
       supabase
         .from("emergency_contacts")
-        .select("name,phone_number,relationship,email")
-        .eq("clerk_user_id", touristId),
+        .select("name,phone,relationship,email")
+        .eq("tourist_id", touristId),
       supabase
         .from("locations")
         .select("created_at")

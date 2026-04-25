@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const { error: deleteError } = await supabase
       .from("emergency_contacts")
       .delete()
-      .eq("clerk_user_id", userId);
+      .eq("tourist_id", userId);
 
     if (deleteError) {
       console.error("Delete emergency contacts error:", deleteError);
@@ -54,9 +54,9 @@ export async function POST(request: Request) {
     // Insert new contacts if any are provided
     if (contacts.length > 0) {
       const formattedContacts = contacts.map((contact) => ({
-        clerk_user_id: userId,
+        tourist_id: userId,
         name: contact.name,
-        phone_number: contact.phone,
+        phone: contact.phone,
         relationship: contact.relationship,
       }));
 
