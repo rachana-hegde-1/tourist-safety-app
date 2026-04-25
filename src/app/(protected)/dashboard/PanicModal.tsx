@@ -4,7 +4,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -39,16 +39,14 @@ export function PanicModal({ open, onOpenChange, currentLocation, onTriggered }:
   React.useEffect(() => {
     if (phase !== "countdown") return;
     if (seconds > 0) return;
-    void trigger();
+    // void trigger();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, seconds]);
 
-  async function trigger() {
+  async function handlePanicConfirm() {
     if (isPosting) return;
     if (!currentLocation) {
       toast.error("Waiting for GPS location…");
-      setPhase("confirm");
-      setSeconds(3);
       return;
     }
 
@@ -68,17 +66,14 @@ export function PanicModal({ open, onOpenChange, currentLocation, onTriggered }:
 
       if (!res.ok) {
         toast.error("Failed to send panic alert.");
-        setPhase("confirm");
-        setSeconds(3);
         return;
       }
 
-      setPhase("done");
+      onOpenChange(false);
       onTriggered?.();
+      toast.success("Panic alert sent!");
     } catch {
       toast.error("Network error sending panic alert.");
-      setPhase("confirm");
-      setSeconds(3);
     } finally {
       setIsPosting(false);
     }
@@ -86,90 +81,36 @@ export function PanicModal({ open, onOpenChange, currentLocation, onTriggered }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none">
-        <div className="h-full w-full bg-red-600 text-white flex flex-col">
-          <div className="p-6 flex items-center justify-between">
-            <div className="font-semibold tracking-tight">Panic mode</div>
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-white hover:bg-white/10 hover:text-white"
-              onClick={() => onOpenChange(false)}
-              disabled={phase === "countdown" || isPosting}
-            >
-              Close
-            </Button>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-red-600 text-xl">Emergency SOS</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-gray-600">Are you sure you want to trigger a panic alert? This will notify police and your emergency contacts immediately.</p>
+          <div className="h-48 w-full rounded-lg overflow-hidden">
+            {/* map showing current location */}
+            {currentLocation ? (
+              <iframe
+                src={`https://maps.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}&z=15&output=embed`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+            ) : (
+              <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+                Getting current location...
+              </div>
+            )}
           </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-            {phase === "confirm" && (
-              <>
-                <div className="text-3xl font-semibold">Need help now?</div>
-                <div className="mt-3 max-w-md text-white/90">
-                  Press the button below. We’ll start a 3-second countdown before triggering.
-                </div>
-                <Button
-                  type="button"
-                  className={cn(
-                    "mt-10 h-20 w-full max-w-sm text-xl font-semibold rounded-2xl",
-                    "bg-white text-red-700 hover:bg-white/90",
-                  )}
-                  onClick={() => setPhase("countdown")}
-                >
-                  Trigger panic alert
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="mt-4 text-white hover:bg-white/10 hover:text-white"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </Button>
-              </>
-            )}
-
-            {phase === "countdown" && (
-              <>
-                <div className="text-2xl font-semibold">Sending in…</div>
-                <div className="mt-6 text-8xl font-bold tabular-nums">{seconds}</div>
-                <div className="mt-4 text-white/90">
-                  Keep your phone steady for the most accurate location.
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="mt-10 text-white hover:bg-white/10 hover:text-white"
-                  onClick={() => {
-                    setPhase("confirm");
-                    setSeconds(3);
-                  }}
-                  disabled={isPosting}
-                >
-                  Cancel countdown
-                </Button>
-              </>
-            )}
-
-            {phase === "done" && (
-              <>
-                <div className="text-3xl font-semibold">Help is on the way</div>
-                <div className="mt-3 max-w-md text-white/90">
-                  Stay where you are if it’s safe. Keep your phone on and location enabled.
-                </div>
-                <Button
-                  type="button"
-                  className="mt-10 bg-white text-red-700 hover:bg-white/90"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Back to dashboard
-                </Button>
-              </>
-            )}
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isPosting}>Cancel</Button>
+            <Button variant="destructive" className="flex-1" onClick={handlePanicConfirm} disabled={isPosting}>Send SOS Alert</Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-
