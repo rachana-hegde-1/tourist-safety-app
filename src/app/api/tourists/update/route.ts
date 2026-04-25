@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+import QRCode from "qrcode";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
@@ -34,6 +36,37 @@ export async function PATCH(request: Request) {
     }
 
     const { full_name, phone, destination, trip_start, trip_end, preferred_language } = parseResult.data;
+    
+    // Generate new digital ID hash and QR code since personal info might have changed
+    const digitalIdData = {
+      clerk_user_id: userId,
+      full_name,
+      phone_number: phone,
+      destination,
+      trip_start_date: trip_start,
+      trip_end_date: trip_end,
+      updated_at: new Date().toISOString()
+    };
+    
+    const digitalIdHash = crypto.createHash('sha256')
+      .update(JSON.stringify(digitalIdData))
+      .digest('hex');
+    
+    const qrCodeData = JSON.stringify({
+      tourist_id: userId,
+      hash: digitalIdHash,
+      name: full_name,
+      phone: phone,
+      verified: true
+    });
+    
+    let digitalIdQr = null;
+    try {
+      digitalIdQr = await QRCode.toDataURL(qrCodeData);
+    } catch (qrError) {
+      console.error("QR generation error in profile update:", qrError);
+    }
+
     const supabase = createSecureSupabaseClient(userId);
 
     // Update tourist profile
@@ -46,6 +79,8 @@ export async function PATCH(request: Request) {
         trip_start_date: trip_start,
         trip_end_date: trip_end,
         preferred_language,
+        digital_id_hash: digitalIdHash,
+        digital_id_qr: digitalIdQr,
         updated_at: new Date().toISOString() 
       })
       .eq("clerk_user_id", userId)

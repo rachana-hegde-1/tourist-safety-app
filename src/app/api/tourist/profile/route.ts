@@ -27,7 +27,7 @@ export async function GET() {
   const [{ data: tourist, error: touristError }, { data: contacts, error: contactsError }] = await Promise.all([
     supabase
       .from("tourists")
-      .select("full_name, phone_number, preferred_language, device_id, destination, trip_start_date, trip_end_date")
+      .select("full_name, phone_number, preferred_language, device_id, destination, trip_start_date, trip_end_date, digital_id_hash, digital_id_qr")
       .eq("clerk_user_id", userId)
       .maybeSingle(),
     supabase
@@ -70,11 +70,48 @@ export async function PATCH(request: Request) {
   }
 
   const { full_name, phone_number, preferred_language, emergency_contacts } = parseResult.data;
+  
+  // Generate new digital ID hash and QR code since personal info might have changed
+  const digitalIdData = {
+    clerk_user_id: userId,
+    full_name,
+    phone_number,
+    updated_at: new Date().toISOString()
+  };
+  
+  const { createHash } = await import("node:crypto");
+  const digitalIdHash = createHash('sha256')
+    .update(JSON.stringify(digitalIdData))
+    .digest('hex');
+  
+  const qrCodeData = JSON.stringify({
+    tourist_id: userId,
+    hash: digitalIdHash,
+    name: full_name,
+    phone: phone_number,
+    verified: true
+  });
+  
+  const QRCode = await import("qrcode");
+  let digitalIdQr = null;
+  try {
+    digitalIdQr = await QRCode.toDataURL(qrCodeData);
+  } catch (qrError) {
+    console.error("QR generation error in profile PATCH:", qrError);
+  }
+
   const supabase = createSecureSupabaseClient(userId);
 
   const { error: touristError } = await supabase
     .from("tourists")
-    .update({ full_name, phone_number, preferred_language, updated_at: new Date().toISOString() })
+    .update({ 
+      full_name, 
+      phone_number, 
+      preferred_language, 
+      digital_id_hash: digitalIdHash,
+      digital_id_qr: digitalIdQr,
+      updated_at: new Date().toISOString() 
+    })
     .eq("clerk_user_id", userId);
 
   if (touristError) {
