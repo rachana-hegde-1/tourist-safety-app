@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: Request) {
   try {
@@ -52,7 +53,22 @@ export async function GET(request: Request) {
       });
     }
 
-    if (data.tourist_id) {
+    const { userId } = await auth();
+    let currentUserTouristId = null;
+    
+    if (userId) {
+      const { data: tourist } = await supabase
+        .from("tourists")
+        .select("id")
+        .eq("clerk_user_id", userId)
+        .maybeSingle();
+      
+      if (tourist) {
+        currentUserTouristId = tourist.id;
+      }
+    }
+
+    if (data.tourist_id && data.tourist_id !== currentUserTouristId) {
       return NextResponse.json({
         ok: true,
         available: false,
