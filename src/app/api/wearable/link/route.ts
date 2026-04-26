@@ -103,8 +103,7 @@ export async function POST(request: NextRequest) {
     const { error: updateTouristError } = await supabase
       .from("tourists")
       .update({ 
-        device_id: deviceId,
-        updated_at: new Date().toISOString()
+        device_id: deviceId
       })
       .eq("clerk_user_id", userId);
 
