@@ -634,127 +634,88 @@ export default function DashboardSettingsPage() {
                   </Badge>
                 </div>
 
+                {bleSupported && (
+                  <div className="space-y-3 border-t pt-4">
+                    <p className="text-sm font-medium">Bluetooth Connection</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleConnectBluetooth}
+                        disabled={bleStatus === "scanning" || bleStatus === "connecting"}
+                      >
+                        {bleStatus === "scanning"
+                          ? "Scanning..."
+                          : bleStatus === "connecting"
+                          ? "Connecting..."
+                          : bleConnected
+                          ? "Bluetooth connected"
+                          : "Connect wearable by Bluetooth"}
+                      </Button>
+                      {bleConnected && (
+                        <Button type="button" variant="secondary" onClick={disconnectWearable}>
+                          Disconnect Bluetooth
+                        </Button>
+                      )}
+                    </div>
+                    {bleDeviceName && (
+                      <p className="text-sm text-gray-600">
+                        Connected via Bluetooth: {bleDeviceName}
+                      </p>
+                    )}
+                    {bleStatus === "error" && bleError && (
+                      <p className="text-sm text-red-700">Bluetooth error: {bleError}</p>
+                    )}
+                  </div>
+                )}
+                {!bleSupported && (
+                  <div className="space-y-3 border-t pt-4">
+                    <p className="text-sm text-gray-600">
+                      Your browser does not currently support Web Bluetooth. Use a compatible browser such as Chrome on Android or Edge/Chrome on desktop.
+                    </p>
+                  </div>
+                )}
+
                 {!linkedDeviceId && (
-                  <div className="space-y-3">
-                    {bleSupported ? (
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleConnectBluetooth}
-                            disabled={bleStatus === "scanning" || bleStatus === "connecting"}
-                          >
-                            {bleStatus === "scanning"
-                              ? "Scanning..."
-                              : bleStatus === "connecting"
-                              ? "Connecting..."
-                              : bleConnected
-                              ? "Bluetooth connected"
-                              : "Connect wearable by Bluetooth"}
-                          </Button>
-                          {bleConnected && (
-                            <Button type="button" variant="secondary" onClick={disconnectWearable}>
-                              Disconnect Bluetooth
-                            </Button>
-                          )}
-                        </div>
-                        {bleDeviceName && (
-                          <p className="text-sm text-gray-600">
-                            Connected device: {bleDeviceName}
-                          </p>
-                        )}
-                        {bleStatus === "error" && bleError && (
-                          <p className="text-sm text-red-700">Bluetooth error: {bleError}</p>
-                        )}
-                        <div className="border-t pt-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="deviceId">Wearable Device ID</Label>
-                            <Input
-                              id="deviceId"
-                              value={deviceIdInput}
-                              onChange={(e) => {
-                                setDeviceIdInput(e.target.value);
-                                setVerifyStatus("idle");
-                                setVerifyReason(null);
-                              }}
-                              placeholder="Enter your wearable device ID"
-                            />
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={verifyDevice}
-                              disabled={verifyStatus === "checking" || !deviceIdInput.trim()}
-                            >
-                              {verifyStatus === "checking" ? "Verifying..." : "Verify device"}
-                            </Button>
-                            {verifyStatus === "available" && (
-                              <Button
-                                type="button"
-                                onClick={linkDevice}
-                                disabled={isLinkingDevice}
-                              >
-                                {isLinkingDevice ? "Linking..." : "Link wearable"}
-                              </Button>
-                            )}
-                          </div>
-                          {verifyStatus === "available" && (
-                            <div className="text-sm text-green-700">Device is available and ready to link.</div>
-                          )}
-                          {verifyStatus === "unavailable" && (
-                            <div className="text-sm text-red-700">
-                              Unable to verify device{verifyReason ? `: ${verifyReason}` : "."}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-sm text-gray-600">
-                          Your browser does not currently support Web Bluetooth. Use a compatible browser such as Chrome on Android or Edge/Chrome on desktop.
-                        </p>
-                        <div className="space-y-2">
-                          <Label htmlFor="deviceId">Wearable Device ID</Label>
-                          <Input
-                            id="deviceId"
-                            value={deviceIdInput}
-                            onChange={(e) => {
-                              setDeviceIdInput(e.target.value);
-                              setVerifyStatus("idle");
-                              setVerifyReason(null);
-                            }}
-                            placeholder="Enter your wearable device ID"
-                          />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={verifyDevice}
-                            disabled={verifyStatus === "checking" || !deviceIdInput.trim()}
-                          >
-                            {verifyStatus === "checking" ? "Verifying..." : "Verify device"}
-                          </Button>
-                          {verifyStatus === "available" && (
-                            <Button
-                              type="button"
-                              onClick={linkDevice}
-                              disabled={isLinkingDevice}
-                            >
-                              {isLinkingDevice ? "Linking..." : "Link wearable"}
-                            </Button>
-                          )}
-                        </div>
-                        {verifyStatus === "available" && (
-                          <div className="text-sm text-green-700">Device is available and ready to link.</div>
-                        )}
-                        {verifyStatus === "unavailable" && (
-                          <div className="text-sm text-red-700">
-                            Unable to verify device{verifyReason ? `: ${verifyReason}` : "."}
-                          </div>
-                        )}
+                  <div className="space-y-3 border-t pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="deviceId">Wearable Device ID</Label>
+                      <Input
+                        id="deviceId"
+                        value={deviceIdInput}
+                        onChange={(e) => {
+                          setDeviceIdInput(e.target.value);
+                          setVerifyStatus("idle");
+                          setVerifyReason(null);
+                        }}
+                        placeholder="Enter your wearable device ID"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={verifyDevice}
+                        disabled={verifyStatus === "checking" || !deviceIdInput.trim()}
+                      >
+                        {verifyStatus === "checking" ? "Verifying..." : "Verify device"}
+                      </Button>
+                      {verifyStatus === "available" && (
+                        <Button
+                          type="button"
+                          onClick={linkDevice}
+                          disabled={isLinkingDevice}
+                        >
+                          {isLinkingDevice ? "Linking..." : "Link wearable"}
+                        </Button>
+                      )}
+                    </div>
+                    {verifyStatus === "available" && (
+                      <div className="text-sm text-green-700">Device is available and ready to link.</div>
+                    )}
+                    {verifyStatus === "unavailable" && (
+                      <div className="text-sm text-red-700">
+                        Unable to verify device{verifyReason ? `: ${verifyReason}` : "."}
                       </div>
                     )}
                   </div>
