@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Find the wearable device
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("device_id, tourist_id, status")
+      .select("device_id, tourist_id, is_connected")
       .eq("device_id", deviceId)
       .maybeSingle();
 
@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
       .from("wearables")
       .update({ 
         tourist_id: userId,
-        status: 'linked',
-        updated_at: new Date().toISOString()
+        is_connected: true
       })
       .eq("device_id", deviceId);
 
