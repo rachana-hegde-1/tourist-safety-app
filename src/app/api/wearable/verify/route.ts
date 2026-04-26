@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase
       .from("wearables")
-      .select("device_id, linked_user_id")
+      .select("device_id, tourist_id")
       .eq("device_id", deviceId)
       .maybeSingle();
 
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       });
     }
 
-    if (data.linked_user_id) {
+    if (data.tourist_id) {
       return NextResponse.json({
         ok: true,
         available: false,

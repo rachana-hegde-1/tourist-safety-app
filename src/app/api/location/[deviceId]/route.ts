@@ -17,11 +17,11 @@ export async function GET(
     // Find the linked user for this device
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("linked_user_id")
+      .select("tourist_id")
       .eq("device_id", deviceId)
       .maybeSingle();
 
-    if (wearableError || !wearable || !wearable.linked_user_id) {
+    if (wearableError || !wearable || !wearable.tourist_id) {
       return NextResponse.json(
         { error: "Device not found or not linked" },
         { status: 404 }
@@ -32,7 +32,7 @@ export async function GET(
     const { data: location, error: locationError } = await supabase
       .from("locations")
       .select("latitude, longitude")
-      .eq("clerk_user_id", wearable.linked_user_id)
+      .eq("clerk_user_id", wearable.tourist_id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

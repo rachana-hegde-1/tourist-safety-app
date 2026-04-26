@@ -112,7 +112,7 @@ export async function submitOnboarding(formData: FormData) {
     if (deviceId) {
       const { data: wearable, error: wearableError } = await supabase
         .from("wearables")
-        .select("device_id, linked_user_id")
+        .select("device_id, tourist_id")
         .eq("device_id", deviceId)
         .maybeSingle();
 
@@ -122,13 +122,13 @@ export async function submitOnboarding(formData: FormData) {
       if (!wearable) {
         throw new Error("Wearable device ID not found.");
       }
-      if (wearable.linked_user_id) {
+      if (wearable.tourist_id) {
         throw new Error("Wearable device is already linked.");
       }
 
       const { error: linkError } = await supabase
         .from("wearables")
-        .update({ linked_user_id: userId })
+        .update({ tourist_id: userId })
         .eq("device_id", deviceId);
 
       if (linkError) {

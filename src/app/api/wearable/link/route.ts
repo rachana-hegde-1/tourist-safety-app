@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Find the wearable device
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("device_id, linked_user_id, status")
+      .select("device_id, tourist_id, status")
       .eq("device_id", deviceId)
       .maybeSingle();
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
-    if (wearable.linked_user_id && wearable.linked_user_id !== userId) {
+    if (wearable.tourist_id && wearable.tourist_id !== userId) {
       return NextResponse.json({ 
         ok: false, 
         error: "Wearable already linked to another user" 
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const { error: linkError } = await supabase
       .from("wearables")
       .update({ 
-        linked_user_id: userId,
+        tourist_id: userId,
         status: 'linked',
         updated_at: new Date().toISOString()
       })

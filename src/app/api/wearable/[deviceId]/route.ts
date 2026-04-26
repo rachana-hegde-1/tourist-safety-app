@@ -141,11 +141,11 @@ export async function POST(
     // Check if wearable exists and is linked
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
-      .select("device_id, linked_user_id, status")
+      .select("device_id, tourist_id, status")
       .eq("device_id", deviceId)
       .single();
 
-    if (wearableError || !wearable || wearable.status !== "linked" || !wearable.linked_user_id) {
+    if (wearableError || !wearable || wearable.status !== "linked" || !wearable.tourist_id) {
       return NextResponse.json(
         { error: "Wearable device not found or not linked" },
         { 
@@ -159,7 +159,7 @@ export async function POST(
     const { data: tourist } = await supabase
       .from("tourists")
       .select("id")
-      .eq("clerk_user_id", wearable.linked_user_id)
+      .eq("clerk_user_id", wearable.tourist_id)
       .maybeSingle();
 
     if (!tourist) {
