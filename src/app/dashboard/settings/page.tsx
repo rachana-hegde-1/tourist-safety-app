@@ -630,7 +630,7 @@ export default function DashboardSettingsPage() {
                     </div>
                   </div>
                   <Badge variant={linkedDeviceId ? "default" : "secondary"}>
-                    {linkedDeviceId ? "Connected" : "Not connected"}
+                    {linkedDeviceId ? "Linked" : "Not linked"}
                   </Badge>
                 </div>
 
