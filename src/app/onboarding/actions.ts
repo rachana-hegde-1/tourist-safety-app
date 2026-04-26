@@ -156,7 +156,7 @@ export async function submitOnboarding(formData: FormData) {
         onboarding_completed: true,
       },
       { onConflict: "clerk_user_id" },
-    );
+    ).select("id").single();
 
     if (upsertError) {
       console.error("[Onboarding] Supabase insert error:", {
@@ -168,29 +168,29 @@ export async function submitOnboarding(formData: FormData) {
       throw new Error(`Failed to save onboarding: ${upsertError.message}`);
     }
 
-    const { error: deleteError } = await supabase
-      .from("emergency_contacts")
-      .delete()
-      .eq("tourist_id", userId);
+    const touristId = upsertError ? null : (await supabase.from("tourists").select("id").eq("clerk_user_id", userId).single()).data?.id;
 
-    if (deleteError) {
-      console.error("[Onboarding] Delete emergency contacts error:", deleteError);
-      // Don't fail onboarding if emergency_contacts table doesn't exist
-      // throw new Error("Failed to update emergency contacts.");
-    } else {
-      const { error: insertError } = await supabase.from("emergency_contacts").insert(
-        emergencyContacts.map((c) => ({
-          tourist_id: userId,
-          name: c.name,
-          phone: c.phone,
-          relationship: c.relationship,
-        })),
-      );
+    if (touristId) {
+      const { error: deleteError } = await supabase
+        .from("emergency_contacts")
+        .delete()
+        .eq("tourist_id", touristId);
 
-      if (insertError) {
-        console.error("[Onboarding] Insert emergency contacts error:", insertError);
-        // Don't fail onboarding if emergency_contacts table doesn't exist
-        // throw new Error("Failed to save emergency contacts.");
+      if (deleteError) {
+        console.error("[Onboarding] Delete emergency contacts error:", deleteError);
+      } else {
+        const { error: insertError } = await supabase.from("emergency_contacts").insert(
+          emergencyContacts.map((c) => ({
+            tourist_id: touristId,
+            name: c.name,
+            phone: c.phone,
+            relationship: c.relationship,
+          })),
+        );
+
+        if (insertError) {
+          console.error("[Onboarding] Insert emergency contacts error:", insertError);
+        }
       }
     }
 

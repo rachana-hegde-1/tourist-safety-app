@@ -37,11 +37,24 @@ export async function POST(request: Request) {
     const { contacts } = parseResult.data;
     const supabase = createSecureSupabaseClient(userId);
 
+    const { data: tourist, error: touristError } = await supabase
+      .from("tourists")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+
+    if (touristError || !tourist) {
+      return NextResponse.json({
+        ok: false,
+        error: "Tourist profile not found"
+      }, { status: 404, headers: securityHeaders });
+    }
+
     // Delete all existing emergency contacts for this user
     const { error: deleteError } = await supabase
       .from("emergency_contacts")
       .delete()
-      .eq("tourist_id", userId);
+      .eq("tourist_id", tourist.id);
 
     if (deleteError) {
       console.error("Delete emergency contacts error:", deleteError);
@@ -51,10 +64,9 @@ export async function POST(request: Request) {
       }, { status: 500, headers: securityHeaders });
     }
 
-    // Insert new contacts if any are provided
     if (contacts.length > 0) {
       const formattedContacts = contacts.map((contact) => ({
-        tourist_id: userId,
+        tourist_id: tourist.id,
         name: contact.name,
         phone: contact.phone,
         relationship: contact.relationship,

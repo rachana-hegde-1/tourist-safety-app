@@ -44,8 +44,7 @@ export async function PATCH(request: Request) {
       phone_number: phone,
       destination,
       trip_start_date: trip_start,
-      trip_end_date: trip_end,
-      updated_at: new Date().toISOString()
+      trip_end_date: trip_end
     };
     
     const digitalIdHash = crypto.createHash('sha256')
@@ -80,8 +79,7 @@ export async function PATCH(request: Request) {
         trip_end_date: trip_end,
         preferred_language,
         digital_id_hash: digitalIdHash,
-        digital_id_qr: digitalIdQr,
-        updated_at: new Date().toISOString() 
+        digital_id_qr: digitalIdQr
       })
       .eq("clerk_user_id", userId)
       .select()

@@ -24,18 +24,23 @@ export async function GET() {
   }
 
   const supabase = createSecureSupabaseClient(userId);
-  const [{ data: tourist, error: touristError }, { data: contacts, error: contactsError }] = await Promise.all([
-    supabase
-      .from("tourists")
-      .select("full_name, phone_number, preferred_language, device_id, destination, trip_start_date, trip_end_date, digital_id_hash, digital_id_qr")
-      .eq("clerk_user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("emergency_contacts")
-      .select("id, name, phone, relationship")
-      .eq("tourist_id", userId)
-      .order("created_at", { ascending: false }),
-  ]);
+  const { data: tourist, error: touristError } = await supabase
+    .from("tourists")
+    .select("id, full_name, phone_number, preferred_language, device_id, destination, trip_start_date, trip_end_date, digital_id_hash, digital_id_qr")
+    .eq("clerk_user_id", userId)
+    .maybeSingle();
+
+  if (touristError || !tourist) {
+    return NextResponse.json(
+      { ok: false, reason: "db_error" },
+      { status: 500, headers: securityHeaders }
+    );
+  }
+
+  const { data: contacts, error: contactsError } = await supabase
+    .from("emergency_contacts")
+    .select("id, name, phone, relationship")
+    .eq("tourist_id", tourist.id);
 
   if (touristError || contactsError) {
     return NextResponse.json(
@@ -80,8 +85,7 @@ export async function PATCH(request: Request) {
   const digitalIdData = {
     clerk_user_id: userId,
     full_name,
-    phone_number,
-    updated_at: new Date().toISOString()
+    phone_number
   };
   
   const { createHash } = await import("node:crypto");
@@ -107,17 +111,18 @@ export async function PATCH(request: Request) {
 
   const supabase = createSecureSupabaseClient(userId);
 
-  const { error: touristError } = await supabase
+  const { data: tourist, error: touristError } = await supabase
     .from("tourists")
     .update({ 
       full_name, 
       phone_number, 
       preferred_language, 
       digital_id_hash: digitalIdHash,
-      digital_id_qr: digitalIdQr,
-      updated_at: new Date().toISOString() 
+      digital_id_qr: digitalIdQr
     })
-    .eq("clerk_user_id", userId);
+    .eq("clerk_user_id", userId)
+    .select("id")
+    .single();
 
   if (touristError) {
     return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
@@ -126,14 +131,14 @@ export async function PATCH(request: Request) {
   const { error: deleteError } = await supabase
     .from("emergency_contacts")
     .delete()
-    .eq("tourist_id", userId);
+    .eq("tourist_id", tourist.id);
 
   if (deleteError) {
     return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500, headers: securityHeaders });
   }
 
   const formattedContacts = emergency_contacts.map((contact) => ({
-    tourist_id: userId,
+    tourist_id: tourist.id,
     name: contact.name,
     phone: contact.phone_number,
     relationship: contact.relationship,
