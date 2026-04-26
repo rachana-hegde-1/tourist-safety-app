@@ -196,10 +196,10 @@ export function TrackClient({ token }: { token: string }) {
             </div>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <div className={\`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors \${isUpdating ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}\`}>
-              <span className={\`relative flex h-2 w-2\`}>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isUpdating ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+              <span className={`relative flex h-2 w-2`}>
                 {isUpdating && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>}
-                <span className={\`relative inline-flex rounded-full h-2 w-2 \${isUpdating ? 'bg-amber-500' : 'bg-emerald-500'}\`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isUpdating ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
               </span>
               {isUpdating ? "Updating..." : "Live"}
             </div>
@@ -219,9 +219,9 @@ export function TrackClient({ token }: { token: string }) {
             {/* Floating Status Badge for Mobile */}
             <div className="absolute top-4 right-4 z-[400] sm:hidden">
               <div className="bg-white/90 backdrop-blur-md shadow-lg dark:bg-slate-900/90 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700">
-                <span className={\`relative flex h-2 w-2\`}>
+                <span className={`relative flex h-2 w-2`}>
                   {isUpdating && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>}
-                  <span className={\`relative inline-flex rounded-full h-2 w-2 \${isUpdating ? 'bg-amber-500' : 'bg-emerald-500'}\`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isUpdating ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
                 </span>
                 {isUpdating ? "Updating" : "Live"}
               </div>
