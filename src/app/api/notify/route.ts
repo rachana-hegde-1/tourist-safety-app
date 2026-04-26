@@ -369,6 +369,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createSupabaseAdminClient();
     const { data: alert, error } = await supabase
+      .from("alerts")
       .select("id, type, created_at, resolved")
       .eq("id", alertId)
       .single();

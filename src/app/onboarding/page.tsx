@@ -372,7 +372,7 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>ID type</Label>
-                    <Select value={idType} onValueChange={(v) => setIdType(v)}>
+                    <Select value={idType} onValueChange={(v) => setIdType(v as string)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select an ID type" />
                       </SelectTrigger>

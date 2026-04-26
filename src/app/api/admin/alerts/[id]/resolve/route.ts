@@ -18,7 +18,7 @@ export async function POST(
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("alerts")
-    .update({ resolved: true, resolved_by: actor.id })
+    .update({ resolved: true, resolved_by: actor.userId })
     .eq("id", alertId);
   if (error) return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
 

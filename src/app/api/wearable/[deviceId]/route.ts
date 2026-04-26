@@ -206,14 +206,11 @@ export async function POST(
           analyzeLocationHistory(recentLocations).then(async (anomalyAnalysis) => {
             if (anomalyAnalysis && anomalyAnalysis.isAnomaly && anomalyAnalysis.confidence > 80) {
               await supabase.from("alerts").insert({
-                clerk_user_id: wearable.linked_user_id,
-                type: "panic",
+                tourist_id: tourist.id,
+                type: "ANOMALY",
                 message: `AI Anomaly Detected (Wearable Data): ${anomalyAnalysis.reason}`,
-                status: "OPEN",
                 latitude,
                 longitude,
-                source: "wearable",
-                device_id: deviceId,
                 created_at: new Date().toISOString(),
               });
             }
