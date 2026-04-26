@@ -98,12 +98,11 @@ export const notificationService: NotificationService = {
     await supabase
       .from("alerts")
       .insert({
-        user_id: tourist.id,
+        tourist_id: tourist.id,
         type: alertType,
         latitude: Number.isFinite(latitude) ? latitude : 0,
         longitude: Number.isFinite(longitude) ? longitude : 0,
-        timestamp: new Date().toISOString(),
-        status: "active",
+        created_at: new Date().toISOString(),
         message: `${alertType} detected - Location: ${locationString}`
       });
   },

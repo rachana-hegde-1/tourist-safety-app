@@ -230,11 +230,10 @@ export async function POST(
       const { error: alertError } = await supabase
         .from("alerts")
         .insert({
-          clerk_user_id: wearable.linked_user_id,
+          tourist_id: tourist.id,
           type: type.toUpperCase(),
           latitude,
           longitude,
-          status: "OPEN",
           message: message || `${type} detected from wearable device`,
           created_at: new Date().toISOString(),
         });

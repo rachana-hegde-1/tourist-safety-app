@@ -72,13 +72,11 @@ export async function POST(request: Request) {
             // Consider anomaly only if high confidence
             if (anomalyAnalysis && anomalyAnalysis.isAnomaly && anomalyAnalysis.confidence > 80) {
               await supabase.from("alerts").insert({
-                clerk_user_id: userId,
-                type: "panic",
-                message: `AI Anomaly Detected: ${anomalyAnalysis.reason}`,
-                status: "OPEN",
+                tourist_id: tourist.id,
+                type: "ANOMALY",
+                message: `Automated anomaly detected: Risk Level ${anomalyAnalysis.risk_level}/100\nReason: ${anomalyAnalysis.reason}`,
                 latitude,
                 longitude,
-                source: source || "app",
                 created_at: new Date().toISOString(),
               });
             }

@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: alert, error: alertError } = await supabase
     .from("alerts")
-    .select("id,clerk_user_id,type,message,status,latitude,longitude,created_at")
+    .select("id,tourist_id,type,message,resolved,latitude,longitude,created_at")
     .eq("id", alertId)
     .single();
 
@@ -28,15 +28,13 @@ export async function GET(
     return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
   }
 
-  const touristId = alert.clerk_user_id as string;
+  const touristUuid = alert.tourist_id as string;
 
   const { data: tourist } = await supabase
     .from("tourists")
-    .select("id,full_name,id_type,id_number,destination,trip_start_date,trip_end_date")
-    .eq("clerk_user_id", touristId)
+    .select("id,clerk_user_id,full_name,id_type,id_number,destination,trip_start_date,trip_end_date")
+    .eq("id", touristUuid)
     .maybeSingle();
-
-  const touristUuid = tourist?.id;
 
   const [ { data: contacts }, { data: lastGps }, { data: lastWearable } ] =
     await Promise.all([
@@ -76,7 +74,7 @@ export async function GET(
       case_number: generateFirCaseNumber(),
       report_datetime: new Date().toISOString(),
 
-      tourist_id: touristId,
+      tourist_id: tourist?.clerk_user_id ?? "unknown",
       tourist_full_name: tourist?.full_name ?? null,
       tourist_nationality: null,
       tourist_id_type: tourist?.id_type ?? null,

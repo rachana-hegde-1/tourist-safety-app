@@ -32,8 +32,8 @@ export async function GET() {
       .order("timestamp", { ascending: false }),
     supabase
       .from("alerts")
-      .select("id,clerk_user_id,type,status,created_at")
-      .eq("status", "OPEN")
+      .select("id,tourist_id,type,resolved,created_at")
+      .eq("resolved", false)
       .order("created_at", { ascending: false }),
     supabase
       .from("zones")
@@ -52,9 +52,9 @@ export async function GET() {
 
   const alertsByTourist = new Map<string, Array<(typeof alertsRes.data)[number]>>();
   for (const a of alertsRes.data ?? []) {
-    const list = alertsByTourist.get(a.clerk_user_id) ?? [];
+    const list = alertsByTourist.get(a.tourist_id) ?? [];
     list.push(a);
-    alertsByTourist.set(a.clerk_user_id, list);
+    alertsByTourist.set(a.tourist_id, list);
   }
 
   const zones = (zonesRes.data ?? []) as ZoneRow[];
@@ -65,7 +65,7 @@ export async function GET() {
       const loc = latestByTouristId.get(t.id);
       if (!loc) return null;
 
-      const tAlerts = alertsByTourist.get(t.clerk_user_id) ?? [];
+      const tAlerts = alertsByTourist.get(t.id) ?? [];
       const hasOpenPanic = tAlerts.some((a) => a.type?.toUpperCase() === "PANIC");
       const score = typeof t.safety_score === "number" ? t.safety_score : 80;
 

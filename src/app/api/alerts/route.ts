@@ -20,10 +20,21 @@ export async function GET() {
   }
 
   const supabase = createSecureSupabaseClient(userId);
+  // Find the tourist.id corresponding to this clerk user
+  const { data: tourist } = await supabase
+    .from("tourists")
+    .select("id")
+    .eq("clerk_user_id", userId)
+    .maybeSingle();
+
+  if (!tourist) {
+    return NextResponse.json({ ok: false, reason: "tourist_not_found" }, { status: 404, headers: securityHeaders });
+  }
+
   const { data, error } = await supabase
     .from("alerts")
     .select("*")
-    .eq("clerk_user_id", userId)
+    .eq("tourist_id", tourist.id)
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -51,18 +62,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const { type, message, latitude, longitude, accuracy, source } = validation.data;
+    const { type, message, latitude, longitude } = validation.data;
 
     const supabase = createSecureSupabaseClient(userId);
+    const { data: tourist } = await supabase
+      .from("tourists")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+
+    if (!tourist) {
+      return NextResponse.json({ ok: false, reason: "tourist_not_found" }, { status: 404, headers: securityHeaders });
+    }
+
     const { error } = await supabase.from("alerts").insert({
-      clerk_user_id: userId,
+      tourist_id: tourist.id,
       type,
       message,
-      status: "OPEN",
       latitude,
       longitude,
-      accuracy,
-      source,
       created_at: new Date().toISOString(),
     });
 

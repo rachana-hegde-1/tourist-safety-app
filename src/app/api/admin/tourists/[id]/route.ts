@@ -34,16 +34,20 @@ export async function GET(
       .limit(500),
     supabase
       .from("alerts")
-      .select("id,type,message,status,latitude,longitude,created_at")
-      .eq("clerk_user_id", touristId)
-      .order("created_at", { ascending: false }),
+      .select("id,type,message,resolved,created_at")
+      .eq("tourist_id", touristRes.data.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   return NextResponse.json({
     ok: true,
     tourist: touristRes.data,
     locations: locationsRes.data ?? [],
-    alerts: alertsRes.data ?? [],
+    alerts: (alertsRes.data ?? []).map(a => ({
+      ...a,
+      status: a.resolved ? "RESOLVED" : "OPEN"
+    })),
   });
 }
 

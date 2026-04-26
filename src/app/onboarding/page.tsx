@@ -68,7 +68,7 @@ export default function OnboardingPage() {
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [fullName, setFullName] = React.useState("");
   const [phoneNumber, setPhoneNumber] = React.useState("");
-  const [idType, setIdType] = React.useState<"Aadhaar" | "Passport" | "">("");
+  const [idType, setIdType] = React.useState("");
   const [idNumber, setIdNumber] = React.useState("");
   const [photoFile, setPhotoFile] = React.useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = React.useState<string | null>(null);
@@ -372,13 +372,16 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>ID type</Label>
-                    <Select value={idType} onValueChange={(v) => setIdType(v as "Aadhaar" | "Passport")}>
+                    <Select value={idType} onValueChange={(v) => setIdType(v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select an ID type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Aadhaar">Aadhaar</SelectItem>
                         <SelectItem value="Passport">Passport</SelectItem>
+                        <SelectItem value="Driving Licence">Driving Licence</SelectItem>
+                        <SelectItem value="Voter ID">Voter ID</SelectItem>
+                        <SelectItem value="Student ID">Student ID</SelectItem>
+                        <SelectItem value="Foreign National ID">Foreign National ID</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

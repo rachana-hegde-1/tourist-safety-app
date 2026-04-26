@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS tourists (
   full_name TEXT NOT NULL,
   phone_number TEXT NOT NULL,
   email TEXT,
-  id_type TEXT NOT NULL CHECK (id_type IN ('Aadhaar', 'Passport')),
+  id_type TEXT NOT NULL,
   id_number TEXT NOT NULL,
   destination TEXT,
   trip_start_date DATE,

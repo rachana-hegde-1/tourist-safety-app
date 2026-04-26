@@ -9,19 +9,19 @@ export async function GET() {
   const supabase = createSupabaseAdminClient();
   const { data: alerts, error } = await supabase
     .from("alerts")
-    .select("id,clerk_user_id,type,message,status,latitude,longitude,created_at")
+    .select("id,tourist_id,type,message,resolved,latitude,longitude,created_at")
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
 
-  const ids = [...new Set((alerts ?? []).map((a) => a.clerk_user_id))];
+  const ids = [...new Set((alerts ?? []).map((a) => a.tourist_id))];
   const { data: tourists } = ids.length
     ? await supabase
         .from("tourists")
-        .select("clerk_user_id,full_name,photo_url")
-        .in("clerk_user_id", ids)
-    : { data: [] as Array<{ clerk_user_id: string; full_name: string | null; photo_url: string | null }> };
+        .select("id,clerk_user_id,full_name,photo_url")
+        .in("id", ids)
+    : { data: [] as Array<{ id: string; clerk_user_id: string; full_name: string | null; photo_url: string | null }> };
 
-  const touristMap = new Map((tourists ?? []).map((t) => [t.clerk_user_id, t]));
+  const touristMap = new Map((tourists ?? []).map((t) => [t.id, t]));
 
   const sorted = [...(alerts ?? [])].sort((a, b) => {
     const ap = a.type?.toUpperCase() === "PANIC" ? 0 : 1;
@@ -34,9 +34,10 @@ export async function GET() {
     ok: true,
     alerts: sorted.map((a) => ({
       ...a,
-      tourist_name: touristMap.get(a.clerk_user_id)?.full_name ?? "Tourist",
-      tourist_photo: touristMap.get(a.clerk_user_id)?.photo_url ?? null,
+      status: a.resolved ? "RESOLVED" : "OPEN",
+      clerk_user_id: touristMap.get(a.tourist_id)?.clerk_user_id ?? "",
+      tourist_name: touristMap.get(a.tourist_id)?.full_name ?? "Tourist",
+      tourist_photo: touristMap.get(a.tourist_id)?.photo_url ?? null,
     })),
   });
 }
-

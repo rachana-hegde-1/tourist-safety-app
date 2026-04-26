@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         tourists!inner(
-          tourist_id,
+          id,
           full_name,
           phone,
           email,
@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
     const emergencyContacts = tourist.emergency_contacts || [];
 
     // Generate tracking and digital ID links
-    const trackingLink = generateTrackingLink(alertId, tourist.tourist_id);
-    const digitalIdLink = generateDigitalIdLink(tourist.tourist_id);
+    const trackingLink = generateTrackingLink(alertId, tourist.id);
+    const digitalIdLink = generateDigitalIdLink(tourist.id);
 
     // Initialize notification results
     const notificationResults = {
@@ -153,15 +153,9 @@ export async function POST(request: NextRequest) {
     // Log notification results
     console.log(`Notification results for alert ${alertId}:`, notificationResults);
 
-    // Update alert status to indicate notifications were sent
-    await supabase
-      .from("alerts")
-      .update({
-        notification_sent: true,
-        notification_sent_at: new Date().toISOString(),
-        notification_results: notificationResults,
-      })
-      .eq("id", alertId);
+    // Update alert status to indicate notifications were sent (if schema supported it)
+    // Removed because notification_sent, notification_sent_at, notification_results don't exist
+    // on the alerts table.
 
     return NextResponse.json({
       success: true,
@@ -375,8 +369,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createSupabaseAdminClient();
     const { data: alert, error } = await supabase
-      .from("alerts")
-      .select("notification_sent, notification_sent_at, notification_results")
+      .select("id, type, created_at, resolved")
       .eq("id", alertId)
       .single();
 
