@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
 const LinkWearableSchema = z.object({
-  deviceId: z.string().min(10).max(50).regex(/^[a-zA-Z0-9_-]+$/),
+  deviceId: z.string().min(5).max(50).regex(/^[a-zA-Z0-9_-]+$/),
 });
 
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // First check if the tourist exists
     const { data: tourist, error: touristError } = await supabase
       .from("tourists")
-      .select("clerk_user_id")
+      .select("id, clerk_user_id")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
-    if (wearable.tourist_id && wearable.tourist_id !== userId) {
+    if (wearable.tourist_id && wearable.tourist_id !== tourist.id) {
       return NextResponse.json({ 
         ok: false, 
         error: "Wearable already linked to another user" 
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const { error: linkError } = await supabase
       .from("wearables")
       .update({ 
-        tourist_id: userId,
+        tourist_id: tourist.id,
         is_connected: true
       })
       .eq("device_id", deviceId);

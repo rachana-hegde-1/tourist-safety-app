@@ -32,8 +32,8 @@ export async function GET(
     const { data: location, error: locationError } = await supabase
       .from("locations")
       .select("latitude, longitude")
-      .eq("clerk_user_id", wearable.tourist_id)
-      .order("created_at", { ascending: false })
+      .eq("tourist_id", wearable.tourist_id)
+      .order("timestamp", { ascending: false })
       .limit(1)
       .maybeSingle();
 

@@ -7,8 +7,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function main() {
-  const { data, error } = await supabase.from("locations").select("*").limit(1);
-  if (error) console.error(error);
-  else console.log("Locations Columns:", data && data.length ? Object.keys(data[0]) : "No data, but we can check error. Error: " + error);
+  const { data, error } = await supabase.from("wearables").update({ tourist_id: "user_2test" }).eq("device_id", "AEGIS_BAND_01");
+  console.log("Error:", error);
 }
 main();

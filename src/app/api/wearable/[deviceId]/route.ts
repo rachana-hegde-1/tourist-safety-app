@@ -15,7 +15,7 @@ const WearableDataSchema = z.object({
 });
 
 // Device ID validation schema
-const DeviceIdSchema = z.string().min(10).max(50).regex(/^[a-zA-Z0-9_-]+$/);
+const DeviceIdSchema = z.string().min(5).max(50).regex(/^[a-zA-Z0-9_-]+$/);
 
 // Rate limiting configuration
 const getRateLimiter = () => {
@@ -159,7 +159,7 @@ export async function POST(
     const { data: tourist } = await supabase
       .from("tourists")
       .select("id")
-      .eq("clerk_user_id", wearable.tourist_id)
+      .eq("id", wearable.tourist_id)
       .maybeSingle();
 
     if (!tourist) {
