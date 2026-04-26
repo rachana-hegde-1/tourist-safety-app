@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       longitude,
       accuracy,
       source,
-      created_at: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
     });
 
     if (error) {
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         .from("locations")
         .select("*")
         .eq("tourist_id", tourist.id)
-        .order("created_at", { ascending: false })
+        .order("timestamp", { ascending: false })
         .limit(10);
 
       // We need at least a few points to detect an anomaly pattern

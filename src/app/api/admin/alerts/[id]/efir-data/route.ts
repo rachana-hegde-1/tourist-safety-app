@@ -49,20 +49,20 @@ export async function GET(
       touristUuid
         ? supabase
             .from("locations")
-            .select("created_at")
+            .select("timestamp")
             .eq("tourist_id", touristUuid)
             .eq("source", "app")
-            .order("created_at", { ascending: false })
+            .order("timestamp", { ascending: false })
             .limit(1)
             .maybeSingle()
         : Promise.resolve({ data: null }),
       touristUuid
         ? supabase
             .from("locations")
-            .select("created_at")
+            .select("timestamp")
             .eq("tourist_id", touristUuid)
             .eq("source", "wearable")
-            .order("created_at", { ascending: false })
+            .order("timestamp", { ascending: false })
             .limit(1)
             .maybeSingle()
         : Promise.resolve({ data: null }),
@@ -86,8 +86,8 @@ export async function GET(
       last_known_lng: alert.longitude,
       last_known_maps_url: mapsUrl,
 
-      last_gps_signal_at: lastGps?.created_at ?? null,
-      last_wearable_signal_at: lastWearable?.created_at ?? null,
+      last_gps_signal_at: lastGps?.timestamp ?? null,
+      last_wearable_signal_at: lastWearable?.timestamp ?? null,
 
       alert_id: alert.id,
       alert_type: alert.type,

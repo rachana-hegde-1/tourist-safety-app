@@ -17,8 +17,8 @@ export async function GET(request: Request) {
       .eq("onboarding_completed", true),
     supabase
       .from("locations")
-      .select("tourist_id,created_at")
-      .order("created_at", { ascending: false }),
+      .select("tourist_id,timestamp")
+      .order("timestamp", { ascending: false }),
   ]);
 
   if (error) return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const latestLocation = new Map<string, string>();
   for (const loc of locations ?? []) {
     if (!latestLocation.has(loc.tourist_id)) {
-      latestLocation.set(loc.tourist_id, loc.created_at);
+      latestLocation.set(loc.tourist_id, loc.timestamp);
     }
   }
 

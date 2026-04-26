@@ -155,16 +155,30 @@ export async function POST(
       );
     }
 
+    // Get tourist UUID for locations table
+    const { data: tourist } = await supabase
+      .from("tourists")
+      .select("id")
+      .eq("clerk_user_id", wearable.linked_user_id)
+      .maybeSingle();
+
+    if (!tourist) {
+      return NextResponse.json(
+        { error: "Tourist profile not found for linked user" },
+        { status: 404, headers: { ...securityHeaders, ...corsHeaders } }
+      );
+    }
+
     // Create location record
     const { error: locationError } = await supabase
       .from("locations")
       .insert({
-        clerk_user_id: wearable.linked_user_id,
+        tourist_id: tourist.id,
         latitude,
         longitude,
         source: "wearable",
         device_id: deviceId,
-        created_at: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
       });
 
     if (locationError) {
@@ -183,8 +197,8 @@ export async function POST(
       const { data: recentLocations } = await supabase
         .from("locations")
         .select("*")
-        .eq("clerk_user_id", wearable.linked_user_id)
-        .order("created_at", { ascending: false })
+        .eq("tourist_id", tourist.id)
+        .order("timestamp", { ascending: false })
         .limit(10);
 
       if (recentLocations && recentLocations.length > 2) {

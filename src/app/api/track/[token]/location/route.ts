@@ -37,9 +37,9 @@ export async function GET(
       .maybeSingle(),
     supabase
       .from("locations")
-      .select("latitude, longitude, accuracy, created_at")
+      .select("latitude, longitude, accuracy, timestamp")
       .eq("tourist_id", touristId)
-      .order("created_at", { ascending: false })
+      .order("timestamp", { ascending: false })
       .limit(1)
       .maybeSingle(),
   ]);

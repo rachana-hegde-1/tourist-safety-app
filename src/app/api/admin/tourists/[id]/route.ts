@@ -28,9 +28,9 @@ export async function GET(
   const [locationsRes, alertsRes] = await Promise.all([
     supabase
       .from("locations")
-      .select("latitude,longitude,accuracy,source,created_at")
+      .select("latitude,longitude,accuracy,source,timestamp")
       .eq("tourist_id", touristRes.data.id)
-      .order("created_at", { ascending: false })
+      .order("timestamp", { ascending: false })
       .limit(500),
     supabase
       .from("alerts")

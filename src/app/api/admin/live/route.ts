@@ -27,9 +27,9 @@ export async function GET() {
       .eq("onboarding_completed", true),
     supabase
       .from("locations")
-      .select("tourist_id,latitude,longitude,created_at")
-      .gte("created_at", activeSince)
-      .order("created_at", { ascending: false }),
+      .select("tourist_id,latitude,longitude,timestamp")
+      .gte("timestamp", activeSince)
+      .order("timestamp", { ascending: false }),
     supabase
       .from("alerts")
       .select("id,clerk_user_id,type,status,created_at")
@@ -94,7 +94,7 @@ export async function GET() {
         name: t.full_name ?? "Tourist",
         photo_url: t.photo_url,
         safety_score: score,
-        last_seen: loc.created_at,
+        last_seen: loc.timestamp,
         latitude: loc.latitude,
         longitude: loc.longitude,
         zone_status: zoneStatus,

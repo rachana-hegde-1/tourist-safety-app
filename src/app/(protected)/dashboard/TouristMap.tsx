@@ -115,9 +115,9 @@ export default function TouristMap({ onLocation }: Props) {
 
       const { data, error } = await supabase
         .from("locations")
-        .select("latitude,longitude,accuracy,timestamp,created_at")
+        .select("latitude,longitude,accuracy,timestamp")
         .eq("tourist_id", tourist.id)
-        .order("created_at", { ascending: false })
+        .order("timestamp", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -127,9 +127,7 @@ export default function TouristMap({ onLocation }: Props) {
         ? data.timestamp
         : typeof data.timestamp === "string"
           ? Date.parse(data.timestamp)
-          : data.created_at
-            ? new Date(data.created_at).getTime()
-            : Date.now();
+          : Date.now();
 
       setRemoteLocation({
         latitude: data.latitude,
