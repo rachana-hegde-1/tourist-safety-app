@@ -182,6 +182,6 @@ export default function TouristMap({ onLocation }: Props) {
     return () => window.clearInterval(id);
   }, [displayedLocation]);
 
-  return <div ref={containerRef} className="h-[520px] w-full rounded-lg overflow-hidden" />;
+  return <div ref={containerRef} className="relative z-0 h-[520px] w-full rounded-lg overflow-hidden" />;
 }
 
