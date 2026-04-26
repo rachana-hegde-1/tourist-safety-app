@@ -18,10 +18,51 @@ export function PanicButton() {
     setIsActivating(true);
     setShowConfirm(false);
     
-    // Here you would trigger the emergency alert
-    setTimeout(() => {
-      setIsActivating(false);
-    }, 3000);
+    // Get location and send the emergency alert
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            await fetch("/api/alerts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "panic",
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                source: "app",
+              }),
+            });
+          } catch (e) {
+            console.error("Failed to send alert", e);
+          } finally {
+            setTimeout(() => setIsActivating(false), 3000);
+          }
+        },
+        async () => {
+          // Fallback if location access is denied
+          try {
+            await fetch("/api/alerts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "panic",
+                latitude: 0,
+                longitude: 0,
+                message: "Location access denied",
+                source: "app",
+              }),
+            });
+          } finally {
+            setTimeout(() => setIsActivating(false), 3000);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      setTimeout(() => setIsActivating(false), 3000);
+    }
   };
 
   const handleCancel = () => {
