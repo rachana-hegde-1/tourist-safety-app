@@ -222,7 +222,11 @@ export function DashboardClient(props: {
                         <div>
                           <div className="text-sm font-medium">{(a.type ?? "ALERT").toUpperCase()}</div>
                           <div className="text-xs text-muted-foreground">
-                            {a.created_at ? new Date(a.created_at).toLocaleString() : "—"}
+                            {a.created_at ? (() => {
+                              const raw = a.created_at;
+                              const utc = raw.endsWith("Z") || raw.includes("+") ? raw : raw + "Z";
+                              return new Date(utc).toLocaleString();
+                            })() : "—"}
                           </div>
                         </div>
                         <Badge variant={a.type?.toUpperCase() === "PANIC" ? "destructive" : "secondary"}>
