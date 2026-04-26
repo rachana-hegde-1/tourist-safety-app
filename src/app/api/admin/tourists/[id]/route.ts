@@ -13,18 +13,23 @@ export async function GET(
   const touristId = id;
   const supabase = createSupabaseAdminClient();
 
-  const [touristRes, locationsRes, alertsRes] = await Promise.all([
-    supabase
-      .from("tourists")
-      .select(
-        "clerk_user_id,full_name,photo_url,phone_number,id_type,id_number,destination,trip_start_date,trip_end_date,preferred_language,safety_score,device_id,digital_id_hash",
-      )
-      .eq("clerk_user_id", touristId)
-      .maybeSingle(),
+  const touristRes = await supabase
+    .from("tourists")
+    .select(
+      "id,clerk_user_id,full_name,photo_url,phone_number,id_type,id_number,destination,trip_start_date,trip_end_date,preferred_language,safety_score,device_id,digital_id_hash",
+    )
+    .eq("clerk_user_id", touristId)
+    .maybeSingle();
+
+  if (touristRes.error || !touristRes.data) {
+    return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
+  }
+
+  const [locationsRes, alertsRes] = await Promise.all([
     supabase
       .from("locations")
       .select("latitude,longitude,accuracy,source,created_at")
-      .eq("clerk_user_id", touristId)
+      .eq("tourist_id", touristRes.data.id)
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
@@ -33,10 +38,6 @@ export async function GET(
       .eq("clerk_user_id", touristId)
       .order("created_at", { ascending: false }),
   ]);
-
-  if (touristRes.error || !touristRes.data) {
-    return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
-  }
 
   return NextResponse.json({
     ok: true,

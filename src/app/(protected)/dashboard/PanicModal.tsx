@@ -55,7 +55,7 @@ export function PanicModal({ open, onOpenChange, currentLocation, onTriggered }:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "PANIC",
+          type: "panic",
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
           accuracy: currentLocation.accuracy,

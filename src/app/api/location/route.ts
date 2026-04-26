@@ -31,8 +31,19 @@ export async function POST(request: Request) {
     const { latitude, longitude, accuracy, source } = validation.data;
 
     const supabase = createSecureSupabaseClient(userId);
+
+    const { data: tourist, error: touristError } = await supabase
+      .from("tourists")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+
+    if (touristError || !tourist) {
+      return NextResponse.json({ ok: false, reason: "tourist_not_found" }, { status: 404, headers: securityHeaders });
+    }
+
     const { error } = await supabase.from("locations").insert({
-      clerk_user_id: userId,
+      tourist_id: tourist.id,
       latitude,
       longitude,
       accuracy,
@@ -49,7 +60,7 @@ export async function POST(request: Request) {
       const { data: recentLocations } = await supabase
         .from("locations")
         .select("*")
-        .eq("clerk_user_id", userId)
+        .eq("tourist_id", tourist.id)
         .order("created_at", { ascending: false })
         .limit(10);
 

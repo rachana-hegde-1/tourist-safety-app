@@ -33,12 +33,12 @@ export async function GET(
     supabase
       .from("tourists")
       .select("full_name")
-      .eq("clerk_user_id", touristId)
+      .eq("id", touristId)
       .maybeSingle(),
     supabase
       .from("locations")
       .select("latitude, longitude, accuracy, created_at")
-      .eq("clerk_user_id", touristId)
+      .eq("tourist_id", touristId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),

@@ -54,35 +54,50 @@ export default function TouristMap({ onLocation }: Props) {
   React.useEffect(() => {
     if (!isUserLoaded || !user?.id) return;
 
-    const channel = supabase
-      .channel(`locations-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "locations", filter: `clerk_user_id=eq.${user.id}` },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          if (typeof row.latitude !== "number" || typeof row.longitude !== "number") return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-          const timestamp = typeof row.timestamp === "number"
-            ? row.timestamp
-            : typeof row.timestamp === "string"
-              ? Date.parse(row.timestamp)
-              : row.created_at
-                ? new Date(String(row.created_at)).getTime()
-                : Date.now();
+    const setupRealtime = async () => {
+      // First get tourist ID
+      const { data: tourist } = await supabase
+        .from("tourists")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .maybeSingle();
 
-          setRemoteLocation({
-            latitude: row.latitude,
-            longitude: row.longitude,
-            accuracy: typeof row.accuracy === "number" ? row.accuracy : null,
-            timestamp,
-          });
-        },
-      )
-      .subscribe();
+      if (!tourist?.id) return;
+
+      channel = supabase
+        .channel(`locations-${tourist.id}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "locations", filter: `tourist_id=eq.${tourist.id}` },
+          (payload) => {
+            const row = payload.new as Record<string, unknown>;
+            if (typeof row.latitude !== "number" || typeof row.longitude !== "number") return;
+
+            const timestamp = typeof row.timestamp === "number"
+              ? row.timestamp
+              : typeof row.timestamp === "string"
+                ? Date.parse(row.timestamp)
+                : row.created_at
+                  ? new Date(String(row.created_at)).getTime()
+                  : Date.now();
+
+            setRemoteLocation({
+              latitude: row.latitude,
+              longitude: row.longitude,
+              accuracy: typeof row.accuracy === "number" ? row.accuracy : null,
+              timestamp,
+            });
+          },
+        )
+        .subscribe();
+    };
+
+    void setupRealtime();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [isUserLoaded, user?.id, supabase]);
 
@@ -90,10 +105,18 @@ export default function TouristMap({ onLocation }: Props) {
     if (!isUserLoaded || !user?.id) return;
 
     const loadLatestLocation = async () => {
+      const { data: tourist } = await supabase
+        .from("tourists")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .maybeSingle();
+
+      if (!tourist?.id) return;
+
       const { data, error } = await supabase
         .from("locations")
         .select("latitude,longitude,accuracy,timestamp,created_at")
-        .eq("clerk_user_id", user.id)
+        .eq("tourist_id", tourist.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

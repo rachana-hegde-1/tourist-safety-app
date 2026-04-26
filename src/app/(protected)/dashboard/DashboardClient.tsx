@@ -220,13 +220,13 @@ export function DashboardClient(props: {
                     {alerts.slice(0, 5).map((a, idx) => (
                       <div key={a.id ?? `${a.type}-${idx}`} className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium">{a.type ?? "ALERT"}</div>
+                          <div className="text-sm font-medium">{(a.type ?? "ALERT").toUpperCase()}</div>
                           <div className="text-xs text-muted-foreground">
                             {a.created_at ? new Date(a.created_at).toLocaleString() : "—"}
                           </div>
                         </div>
-                        <Badge variant={a.type === "PANIC" ? "destructive" : "secondary"}>
-                          {a.type ?? "ALERT"}
+                        <Badge variant={a.type?.toUpperCase() === "PANIC" ? "destructive" : "secondary"}>
+                          {(a.type ?? "ALERT").toUpperCase()}
                         </Badge>
                       </div>
                     ))}

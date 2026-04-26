@@ -23,11 +23,11 @@ export async function GET() {
   const [touristsRes, locationsRes, alertsRes, zonesRes] = await Promise.all([
     supabase
       .from("tourists")
-      .select("clerk_user_id,full_name,photo_url,safety_score")
+      .select("id, clerk_user_id,full_name,photo_url,safety_score")
       .eq("onboarding_completed", true),
     supabase
       .from("locations")
-      .select("clerk_user_id,latitude,longitude,created_at")
+      .select("tourist_id,latitude,longitude,created_at")
       .gte("created_at", activeSince)
       .order("created_at", { ascending: false }),
     supabase
@@ -45,9 +45,9 @@ export async function GET() {
     return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
   }
 
-  const latestByTourist = new Map<string, (typeof locationsRes.data)[number]>();
+  const latestByTouristId = new Map<string, (typeof locationsRes.data)[number]>();
   for (const loc of locationsRes.data ?? []) {
-    if (!latestByTourist.has(loc.clerk_user_id)) latestByTourist.set(loc.clerk_user_id, loc);
+    if (!latestByTouristId.has(loc.tourist_id)) latestByTouristId.set(loc.tourist_id, loc);
   }
 
   const alertsByTourist = new Map<string, Array<(typeof alertsRes.data)[number]>>();
@@ -62,11 +62,11 @@ export async function GET() {
 
   const tourists = (touristsRes.data ?? [])
     .map((t) => {
-      const loc = latestByTourist.get(t.clerk_user_id);
+      const loc = latestByTouristId.get(t.id);
       if (!loc) return null;
 
       const tAlerts = alertsByTourist.get(t.clerk_user_id) ?? [];
-      const hasOpenPanic = tAlerts.some((a) => a.type === "PANIC");
+      const hasOpenPanic = tAlerts.some((a) => a.type?.toUpperCase() === "PANIC");
       const score = typeof t.safety_score === "number" ? t.safety_score : 80;
 
       let risk: "safe" | "moderate" | "danger" = "safe";

@@ -30,33 +30,42 @@ export async function GET(
 
   const touristId = alert.clerk_user_id as string;
 
-  const [{ data: tourist }, { data: contacts }, { data: lastGps }, { data: lastWearable }] =
+  const { data: tourist } = await supabase
+    .from("tourists")
+    .select("id,full_name,id_type,id_number,destination,trip_start_date,trip_end_date")
+    .eq("clerk_user_id", touristId)
+    .maybeSingle();
+
+  const touristUuid = tourist?.id;
+
+  const [ { data: contacts }, { data: lastGps }, { data: lastWearable } ] =
     await Promise.all([
-      supabase
-        .from("tourists")
-        .select("full_name,id_type,id_number,destination,trip_start_date,trip_end_date")
-        .eq("clerk_user_id", touristId)
-        .maybeSingle(),
-      supabase
-        .from("emergency_contacts")
-        .select("name,phone,relationship,email")
-        .eq("tourist_id", touristId),
-      supabase
-        .from("locations")
-        .select("created_at")
-        .eq("clerk_user_id", touristId)
-        .eq("source", "app")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("locations")
-        .select("created_at")
-        .eq("clerk_user_id", touristId)
-        .eq("source", "wearable")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      touristUuid
+        ? supabase
+            .from("emergency_contacts")
+            .select("name,phone,relationship,email")
+            .eq("tourist_id", touristUuid)
+        : Promise.resolve({ data: [] }),
+      touristUuid
+        ? supabase
+            .from("locations")
+            .select("created_at")
+            .eq("tourist_id", touristUuid)
+            .eq("source", "app")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      touristUuid
+        ? supabase
+            .from("locations")
+            .select("created_at")
+            .eq("tourist_id", touristUuid)
+            .eq("source", "wearable")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
   const mapsUrl = `https://maps.google.com/?q=${alert.latitude},${alert.longitude}`;

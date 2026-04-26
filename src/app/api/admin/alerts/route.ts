@@ -24,8 +24,8 @@ export async function GET() {
   const touristMap = new Map((tourists ?? []).map((t) => [t.clerk_user_id, t]));
 
   const sorted = [...(alerts ?? [])].sort((a, b) => {
-    const ap = a.type === "PANIC" ? 0 : 1;
-    const bp = b.type === "PANIC" ? 0 : 1;
+    const ap = a.type?.toUpperCase() === "PANIC" ? 0 : 1;
+    const bp = b.type?.toUpperCase() === "PANIC" ? 0 : 1;
     if (ap !== bp) return ap - bp;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });

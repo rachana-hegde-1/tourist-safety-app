@@ -13,18 +13,21 @@ export async function GET(request: Request) {
   const [{ data: tourists, error }, { data: locations }] = await Promise.all([
     supabase
       .from("tourists")
-      .select("clerk_user_id,full_name,photo_url,id_type,trip_start_date,trip_end_date,safety_score,device_id")
+      .select("id, clerk_user_id,full_name,photo_url,id_type,trip_start_date,trip_end_date,safety_score,device_id")
       .eq("onboarding_completed", true),
     supabase
       .from("locations")
-      .select("clerk_user_id,created_at")
+      .select("tourist_id,created_at")
       .order("created_at", { ascending: false }),
   ]);
 
   if (error) return NextResponse.json({ ok: false, reason: "db_error" }, { status: 500 });
-  const latestByTourist = new Map<string, string>();
+
+  const latestLocation = new Map<string, string>();
   for (const loc of locations ?? []) {
-    if (!latestByTourist.has(loc.clerk_user_id)) latestByTourist.set(loc.clerk_user_id, loc.created_at);
+    if (!latestLocation.has(loc.tourist_id)) {
+      latestLocation.set(loc.tourist_id, loc.created_at);
+    }
   }
 
   const rows = (tourists ?? [])
@@ -37,11 +40,10 @@ export async function GET(request: Request) {
       trip_end_date: t.trip_end_date,
       safety_score: typeof t.safety_score === "number" ? t.safety_score : 80,
       wearable_connected: Boolean(t.device_id),
-      last_seen: latestByTourist.get(t.clerk_user_id) ?? null,
+      last_seen: latestLocation.get(t.id) ?? null,
       id_type: t.id_type ?? null,
     }))
     .filter((r) => (q ? r.name.toLowerCase().includes(q) : true));
 
   return NextResponse.json({ ok: true, tourists: rows });
 }
-
