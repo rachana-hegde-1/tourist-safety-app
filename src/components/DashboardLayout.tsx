@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardNav } from "./DashboardNav";
+import { SOSAlertOverlay } from "./SOSAlertOverlay";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Navigation */}
       <DashboardNav />
+
+      {/* SOS Alert — polls for wearable SOS and shows full-screen red alert */}
+      <SOSAlertOverlay />
 
       {/* Main content */}
       <div className="flex-1 lg:ml-0">

@@ -17,26 +17,25 @@ const WearableDataSchema = z.object({
 // Device ID validation schema
 const DeviceIdSchema = z.string().min(5).max(50).regex(/^[a-zA-Z0-9_-]+$/);
 
-// Rate limiting configuration
-const getRateLimiter = () => {
+// Rate limiting configuration (gracefully skips if Upstash is not configured)
+const getRateLimiter = (): Ratelimit | null => {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
-    throw new Error(
-      "Missing Upstash Redis env vars. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN."
-    );
+    console.warn("Upstash Redis not configured — rate limiting disabled.");
+    return null;
   }
 
   return new Ratelimit({
     redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(10, "10 s"), // 10 requests per 10 seconds per device
+    limiter: Ratelimit.slidingWindow(10, "10 s"),
   });
 };
 
-let rateLimiter: Ratelimit | undefined;
-const getRateLimit = () => {
-  if (!rateLimiter) {
+let rateLimiter: Ratelimit | null | undefined;
+const getRateLimit = (): Ratelimit | null => {
+  if (rateLimiter === undefined) {
     rateLimiter = getRateLimiter();
   }
   return rateLimiter;
@@ -100,24 +99,31 @@ export async function POST(
       );
     }
 
-    // Apply rate limiting
-    const identifier = `wearable:${deviceId}`;
-    const { success, limit, reset, remaining } = await getRateLimit().limit(identifier);
+    // Apply rate limiting (skipped if Upstash is not configured)
+    const rl = getRateLimit();
+    let limit = 0, reset = 0, remaining = 0;
+    if (rl) {
+      const identifier = `wearable:${deviceId}`;
+      const result = await rl.limit(identifier);
+      limit = result.limit;
+      reset = result.reset;
+      remaining = result.remaining;
 
-    if (!success) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded", retryAfter: reset },
-        { 
-          status: 429, 
-          headers: {
-            ...securityHeaders,
-            ...corsHeaders,
-            'X-RateLimit-Limit': String(limit),
-            'X-RateLimit-Remaining': String(remaining),
-            'X-RateLimit-Reset': new Date(reset).toISOString(),
+      if (!result.success) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded", retryAfter: reset },
+          { 
+            status: 429, 
+            headers: {
+              ...securityHeaders,
+              ...corsHeaders,
+              'X-RateLimit-Limit': String(limit),
+              'X-RateLimit-Remaining': String(remaining),
+              'X-RateLimit-Reset': new Date(reset).toISOString(),
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     // Validate request body
@@ -138,14 +144,16 @@ export async function POST(
 
     const supabase = createSecureSupabaseClient();
 
-    // Check if wearable exists and is linked
+    // Check if wearable exists and is linked to a tourist
+    // NOTE: We do NOT check is_connected here — SOS must always go through
+    // even if the device status shows disconnected.
     const { data: wearable, error: wearableError } = await supabase
       .from("wearables")
       .select("device_id, tourist_id, is_connected")
       .eq("device_id", deviceId)
       .single();
 
-    if (wearableError || !wearable || !wearable.is_connected || !wearable.tourist_id) {
+    if (wearableError || !wearable || !wearable.tourist_id) {
       return NextResponse.json(
         { error: "Wearable device not found or not linked" },
         { 
