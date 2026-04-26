@@ -30,6 +30,11 @@ interface ProfileData {
   trip_end: string;
 }
 
+interface LinkedDevice {
+  device_id: string;
+  created_at: string;
+}
+
 interface EmergencyContactResponse {
   id: string;
   name: string;
@@ -68,9 +73,12 @@ export default function DashboardSettingsPage() {
   });
   const [deviceIdInput, setDeviceIdInput] = useState("");
   const [linkedDeviceId, setLinkedDeviceId] = useState<string | null>(null);
+  const [linkedDevices, setLinkedDevices] = useState<LinkedDevice[]>([]);
+  const [isFetchingDevices, setIsFetchingDevices] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<"idle" | "checking" | "available" | "unavailable">("idle");
   const [verifyReason, setVerifyReason] = useState<string | null>(null);
   const [isLinkingDevice, setIsLinkingDevice] = useState(false);
+  const [isUnlinkingDevice, setIsUnlinkingDevice] = useState<string | null>(null);
 
   const {
     bleSupported,
@@ -94,6 +102,26 @@ export default function DashboardSettingsPage() {
         trip_end: touristData.trip_end_date || "",
       });
       setLinkedDeviceId(touristData.device_id ?? null);
+    }
+
+    const fetchLinkedDevices = async () => {
+      try {
+        setIsFetchingDevices(true);
+        const res = await fetch("/api/wearable/history");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) {
+            setLinkedDevices(json.data);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch linked devices", e);
+      } finally {
+        setIsFetchingDevices(false);
+      }
+    };
+    if (touristData) {
+      fetchLinkedDevices();
     }
 
     const fetchContacts = async () => {
@@ -314,8 +342,21 @@ export default function DashboardSettingsPage() {
       }
 
       setLinkedDeviceId(trimmedDeviceId);
-      setVerifyStatus("available");
-      toast.success("Settings saved successfully", {
+      setVerifyStatus("idle");
+      setDeviceIdInput("");
+      
+      // Refresh the device history
+      try {
+        const historyRes = await fetch("/api/wearable/history");
+        if (historyRes.ok) {
+          const historyJson = await historyRes.json();
+          if (historyJson.data) setLinkedDevices(historyJson.data);
+        }
+      } catch (e) {
+        console.error("Failed to refresh device history", e);
+      }
+
+      toast.success("Wearable linked successfully", {
         style: { color: "white", backgroundColor: "#22c55e" }
       });
     } catch (error) {
@@ -325,6 +366,48 @@ export default function DashboardSettingsPage() {
       });
     } finally {
       setIsLinkingDevice(false);
+    }
+  };
+
+  const handleUnlinkDevice = async (deviceIdToUnlink: string) => {
+    setIsUnlinkingDevice(deviceIdToUnlink);
+    try {
+      const res = await fetch("/api/wearable/unlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: deviceIdToUnlink }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        toast.error(json.error || "Failed to unlink wearable device.", {
+          style: { color: "white", backgroundColor: "#ef4444" }
+        });
+        return;
+      }
+
+      // If we unlinked the active device, clear it
+      if (linkedDeviceId === deviceIdToUnlink) {
+        setLinkedDeviceId(null);
+      }
+
+      // Refresh the device history
+      const historyRes = await fetch("/api/wearable/history");
+      if (historyRes.ok) {
+        const historyJson = await historyRes.json();
+        if (historyJson.data) setLinkedDevices(historyJson.data);
+      }
+
+      toast.success(`Unlinked ${deviceIdToUnlink} successfully`, {
+        style: { color: "white", backgroundColor: "#22c55e" }
+      });
+    } catch (error) {
+      console.error("Unlink device error:", error);
+      toast.error("Unable to unlink wearable device.", {
+        style: { color: "white", backgroundColor: "#ef4444" }
+      });
+    } finally {
+      setIsUnlinkingDevice(null);
     }
   };
 
@@ -602,124 +685,154 @@ export default function DashboardSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Device Status */}
+          {/* Bluetooth Connection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Smartphone className="h-5 w-5 mr-2" />
-                Wearable Device Status
+                Bluetooth Connection
               </CardTitle>
               <CardDescription>
-                Check the status of your linked safety wearable device
+                Connect your wearable to the browser (for supported devices)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-3 h-3 rounded-full ${linkedDeviceId ? "bg-green-500" : "bg-gray-400"}`}
-                    />
-                    <div>
-                      <p className="font-medium">
-                        {linkedDeviceId ? "Device linked" : "No device linked"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {linkedDeviceId ? `Device ID: ${linkedDeviceId}` : "Link a wearable to enable location updates."}
-                      </p>
-                    </div>
+              {bleSupported ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleConnectBluetooth}
+                      disabled={bleStatus === "scanning" || bleStatus === "connecting"}
+                    >
+                      {bleStatus === "scanning"
+                        ? "Scanning..."
+                        : bleStatus === "connecting"
+                        ? "Connecting..."
+                        : bleConnected
+                        ? "Bluetooth connected"
+                        : "Connect wearable by Bluetooth"}
+                    </Button>
+                    {bleConnected && (
+                      <Button type="button" variant="secondary" onClick={disconnectWearable}>
+                        Disconnect Bluetooth
+                      </Button>
+                    )}
                   </div>
-                  <Badge variant={linkedDeviceId ? "default" : "secondary"}>
-                    {linkedDeviceId ? "Linked" : "Not linked"}
-                  </Badge>
+                  {bleDeviceName && (
+                    <p className="text-sm text-gray-600">
+                      Connected via Bluetooth: {bleDeviceName}
+                    </p>
+                  )}
+                  {bleStatus === "error" && bleError && (
+                    <p className="text-sm text-red-700">Bluetooth error: {bleError}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Your browser does not currently support Web Bluetooth. Use a compatible browser such as Chrome on Android or Edge/Chrome on desktop.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Wearable Device Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Smartphone className="h-5 w-5 mr-2" />
+                Wearable Devices
+              </CardTitle>
+              <CardDescription>
+                Manage your linked safety wearables
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                
+                {/* Linked Devices History */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-900">Linked Devices</p>
+                  {isFetchingDevices ? (
+                    <div className="text-sm text-gray-500 animate-pulse">Loading devices...</div>
+                  ) : linkedDevices.length > 0 ? (
+                    <div className="space-y-3">
+                      {linkedDevices.map((device) => (
+                        <div key={device.device_id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-3 h-3 rounded-full ${linkedDeviceId === device.device_id ? "bg-green-500" : "bg-gray-400"}`} />
+                            <div>
+                              <p className="font-medium text-sm">{device.device_id}</p>
+                              <p className="text-xs text-gray-500">
+                                {linkedDeviceId === device.device_id ? "Active device" : "Inactive"}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleUnlinkDevice(device.device_id)}
+                            disabled={isUnlinkingDevice === device.device_id}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No wearables linked yet.</p>
+                  )}
                 </div>
 
-                {bleSupported && (
-                  <div className="space-y-3 border-t pt-4">
-                    <p className="text-sm font-medium">Bluetooth Connection</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleConnectBluetooth}
-                        disabled={bleStatus === "scanning" || bleStatus === "connecting"}
-                      >
-                        {bleStatus === "scanning"
-                          ? "Scanning..."
-                          : bleStatus === "connecting"
-                          ? "Connecting..."
-                          : bleConnected
-                          ? "Bluetooth connected"
-                          : "Connect wearable by Bluetooth"}
-                      </Button>
-                      {bleConnected && (
-                        <Button type="button" variant="secondary" onClick={disconnectWearable}>
-                          Disconnect Bluetooth
-                        </Button>
-                      )}
-                    </div>
-                    {bleDeviceName && (
-                      <p className="text-sm text-gray-600">
-                        Connected via Bluetooth: {bleDeviceName}
-                      </p>
-                    )}
-                    {bleStatus === "error" && bleError && (
-                      <p className="text-sm text-red-700">Bluetooth error: {bleError}</p>
-                    )}
+                {/* Link New Device */}
+                <div className="space-y-3 border-t pt-4">
+                  <p className="text-sm font-medium text-gray-900">Link a New Device</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="deviceId">Wearable Device ID</Label>
+                    <Input
+                      id="deviceId"
+                      value={deviceIdInput}
+                      onChange={(e) => {
+                        setDeviceIdInput(e.target.value);
+                        setVerifyStatus("idle");
+                        setVerifyReason(null);
+                      }}
+                      placeholder="e.g. WD-001 or AEGIS_BAND_01"
+                    />
                   </div>
-                )}
-                {!bleSupported && (
-                  <div className="space-y-3 border-t pt-4">
-                    <p className="text-sm text-gray-600">
-                      Your browser does not currently support Web Bluetooth. Use a compatible browser such as Chrome on Android or Edge/Chrome on desktop.
-                    </p>
-                  </div>
-                )}
-
-                {!linkedDeviceId && (
-                  <div className="space-y-3 border-t pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="deviceId">Wearable Device ID</Label>
-                      <Input
-                        id="deviceId"
-                        value={deviceIdInput}
-                        onChange={(e) => {
-                          setDeviceIdInput(e.target.value);
-                          setVerifyStatus("idle");
-                          setVerifyReason(null);
-                        }}
-                        placeholder="Enter your wearable device ID"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={verifyDevice}
-                        disabled={verifyStatus === "checking" || !deviceIdInput.trim()}
-                      >
-                        {verifyStatus === "checking" ? "Verifying..." : "Verify device"}
-                      </Button>
-                      {verifyStatus === "available" && (
-                        <Button
-                          type="button"
-                          onClick={linkDevice}
-                          disabled={isLinkingDevice}
-                        >
-                          {isLinkingDevice ? "Linking..." : "Link wearable"}
-                        </Button>
-                      )}
-                    </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={verifyDevice}
+                      disabled={verifyStatus === "checking" || !deviceIdInput.trim()}
+                    >
+                      {verifyStatus === "checking" ? "Verifying..." : "Verify device"}
+                    </Button>
                     {verifyStatus === "available" && (
-                      <div className="text-sm text-green-700">Device is available and ready to link.</div>
-                    )}
-                    {verifyStatus === "unavailable" && (
-                      <div className="text-sm text-red-700">
-                        Unable to verify device{verifyReason ? `: ${verifyReason}` : "."}
-                      </div>
+                      <Button
+                        type="button"
+                        onClick={linkDevice}
+                        disabled={isLinkingDevice}
+                      >
+                        {isLinkingDevice ? "Linking..." : "Link wearable"}
+                      </Button>
                     )}
                   </div>
-                )}
+                  {verifyStatus === "available" && (
+                    <div className="text-sm text-green-700">Device is available and ready to link.</div>
+                  )}
+                  {verifyStatus === "unavailable" && (
+                    <div className="text-sm text-red-700">
+                      Unable to verify device{verifyReason ? `: ${verifyReason}` : "."}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </CardContent>
           </Card>

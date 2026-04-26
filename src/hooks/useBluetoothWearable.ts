@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 
 // Replace these with your wearable's actual BLE service and characteristic UUIDs.
 const WEARABLE_SERVICE_UUID = "00001234-0000-1000-8000-00805f9b34fb";
@@ -84,6 +84,52 @@ export function useBluetoothWearable() {
     setBleError(null);
   }, [bleDevice]);
 
+  const syncLocationToCloud = useCallback(async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch("/api/location/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude, longitude }),
+      });
+      if (response.ok) {
+        console.log(`Synced GPS data to cloud: ${latitude},${longitude}`);
+        return true;
+      } else {
+        console.warn("Failed to sync location to cloud, server returned:", response.status);
+        return false;
+      }
+    } catch (error) {
+      console.error("Network error syncing location to cloud:", error);
+      return false;
+    }
+  }, []);
+
+  // Automatically watch and send location when connected
+  useEffect(() => {
+    let watchId: number;
+
+    if (bleConnected && typeof navigator !== "undefined" && "geolocation" in navigator) {
+      console.log("Starting GPS sync to wearable...");
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          syncLocationToCloud(latitude, longitude);
+        },
+        (error) => {
+          console.warn("Failed to get browser location for wearable sync:", error.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+      );
+    }
+
+    return () => {
+      if (watchId !== undefined && typeof navigator !== "undefined" && "geolocation" in navigator) {
+        console.log("Stopping GPS sync to wearable.");
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [bleConnected, syncLocationToCloud]);
+
   return {
     bleSupported,
     bleDevice,
@@ -93,5 +139,6 @@ export function useBluetoothWearable() {
     bleError,
     connectWearable,
     disconnectWearable,
+    syncLocationToCloud,
   };
 }
