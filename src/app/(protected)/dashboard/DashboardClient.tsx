@@ -14,6 +14,7 @@ const TouristMap = dynamic(() => import("./TouristMap"), {
 });
 import { PanicModal } from "./PanicModal";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { SOSAlertOverlay } from "@/components/SOSAlertOverlay";
 
 type AlertRow = {
   id?: string;
@@ -42,6 +43,14 @@ export function DashboardClient(props: {
     accuracy: number | null;
     timestamp?: number;
   } | null>(null);
+
+  // Poll for alert history every 5 seconds for the demo
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      void refreshAlerts();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const safetyVariant: "default" | "secondary" | "destructive" =
     props.safetyScore >= 80
@@ -267,6 +276,7 @@ export function DashboardClient(props: {
         currentLocation={currentLoc}
         onTriggered={() => void refreshAlerts()}
       />
+      <SOSAlertOverlay />
     </DashboardLayout>
   );
 }
