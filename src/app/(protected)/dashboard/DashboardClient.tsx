@@ -3,7 +3,6 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 
-import { useBluetoothWearable } from "@/hooks/useBluetoothWearable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,11 +27,11 @@ export function DashboardClient(props: {
   touristName: string;
   safetyScore: number;
   wearableLinked: boolean;
+  wearableConnected: boolean;
   wearableDeviceId?: string | null;
   initialAlerts: AlertRow[];
 }) {
   const router = useRouter();
-  const { bleConnected } = useBluetoothWearable();
   const [alerts, setAlerts] = React.useState<AlertRow[]>(props.initialAlerts);
   const [panicOpen, setPanicOpen] = React.useState(false);
   const [shareLink, setShareLink] = React.useState<string | null>(null);
@@ -114,9 +113,9 @@ export function DashboardClient(props: {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: bleConnected ? "#16a34a" : props.wearableLinked ? "#f59e0b" : "#9ca3af" }}
+                style={{ backgroundColor: props.wearableConnected ? "#16a34a" : props.wearableLinked ? "#f59e0b" : "#9ca3af" }}
               />
-              Wearable {bleConnected ? "connected" : props.wearableLinked ? "linked (not connected)" : "not linked"}
+              Wearable {props.wearableConnected ? "connected" : props.wearableLinked ? "linked (not connected)" : "not linked"}
             </div>
             <Button
               type="button"
@@ -196,8 +195,8 @@ export function DashboardClient(props: {
                         : "Link a wearable from settings to enable real-time tracking."}
                     </p>
                   </div>
-                  <Badge variant={bleConnected ? "default" : "secondary"}>
-                    {bleConnected ? "Connected" : props.wearableLinked ? "Linked" : "Not linked"}
+                  <Badge variant={props.wearableConnected ? "default" : "secondary"}>
+                    {props.wearableConnected ? "Connected" : props.wearableLinked ? "Linked" : "Not linked"}
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">

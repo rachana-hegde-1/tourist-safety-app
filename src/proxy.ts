@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   '/track/(.*)',
   '/verify/(.*)',
   '/api/wearable/(.*)',
+  '/api/location/(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {

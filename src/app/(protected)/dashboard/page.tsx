@@ -4,6 +4,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardClient } from "./DashboardClient";
 import { useTouristData } from "@/hooks/useTouristData";
 import { AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const { touristData, isLoading, isRedirecting, error } = useTouristData();
@@ -54,11 +56,50 @@ export default function DashboardPage() {
   const wearableLinked = Boolean(touristData.device_id);
   const wearableDeviceId = touristData.device_id ?? null;
 
+  // Fetch real connection status from the wearables table
+  const [wearableConnected, setWearableConnected] = useState(false);
+
+  useEffect(() => {
+    if (!wearableDeviceId) {
+      setWearableConnected(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchStatus = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data } = await supabase
+          .from("wearables")
+          .select("is_connected")
+          .eq("device_id", wearableDeviceId)
+          .maybeSingle();
+
+        if (!cancelled) {
+          setWearableConnected(Boolean(data?.is_connected));
+        }
+      } catch {
+        // ignore — will retry on next interval
+      }
+    };
+
+    fetchStatus();
+    // Poll every 30 seconds to keep status fresh
+    const interval = setInterval(fetchStatus, 30_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [wearableDeviceId]);
+
   return (
     <DashboardClient
       touristName={touristName}
       safetyScore={safetyScore}
       wearableLinked={wearableLinked}
+      wearableConnected={wearableConnected}
       wearableDeviceId={wearableDeviceId}
       initialAlerts={[]}
     />
