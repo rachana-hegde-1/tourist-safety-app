@@ -51,14 +51,14 @@ export default function DashboardPage() {
 
   const touristName = touristData.full_name ?? "Tourist";
   const safetyScore = typeof touristData.safety_score === "number" ? touristData.safety_score : 80;
-  const wearableConnected = Boolean(touristData.device_id);
+  const wearableLinked = Boolean(touristData.device_id);
   const wearableDeviceId = touristData.device_id ?? null;
 
   return (
     <DashboardClient
       touristName={touristName}
       safetyScore={safetyScore}
-      wearableConnected={wearableConnected}
+      wearableLinked={wearableLinked}
       wearableDeviceId={wearableDeviceId}
       initialAlerts={[]}
     />
