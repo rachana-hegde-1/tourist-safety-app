@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { createSecureSupabaseClient, securityHeaders } from "@/lib/secure-db";
+import { createSupabaseAdminClient } from "@/lib/supabase";
+import { securityHeaders } from "@/lib/secure-db";
 
 // Zod schemas for input validation
 const WearableDataSchema = z.object({
@@ -142,7 +143,7 @@ export async function POST(
 
     const { latitude, longitude, sos_triggered, fall_detected, low_battery, battery_level } = bodyValidation.data;
 
-    const supabase = createSecureSupabaseClient();
+    const supabase = createSupabaseAdminClient();
 
     // Check if wearable exists and is linked to a tourist
     // NOTE: We do NOT check is_connected here — SOS must always go through
@@ -184,6 +185,7 @@ export async function POST(
         tourist_id: tourist.id,
         latitude,
         longitude,
+        accuracy: 10,
         source: "wearable",
         timestamp: new Date().toISOString(),
       });
