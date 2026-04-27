@@ -10,6 +10,46 @@ import { createSupabaseBrowserClient } from "@/lib/supabase";
 export default function DashboardPage() {
   const { touristData, isLoading, isRedirecting, error } = useTouristData();
 
+  // Fetch real connection status from the wearables table
+  // Hooks MUST be called before any early returns (React rules of hooks)
+  const [wearableConnected, setWearableConnected] = useState(false);
+  const wearableDeviceId = touristData?.device_id ?? null;
+
+  useEffect(() => {
+    if (!wearableDeviceId) {
+      setWearableConnected(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchStatus = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data } = await supabase
+          .from("wearables")
+          .select("is_connected")
+          .eq("device_id", wearableDeviceId)
+          .maybeSingle();
+
+        if (!cancelled) {
+          setWearableConnected(Boolean(data?.is_connected));
+        }
+      } catch {
+        // ignore — will retry on next interval
+      }
+    };
+
+    fetchStatus();
+    // Poll every 30 seconds to keep status fresh
+    const interval = setInterval(fetchStatus, 30_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [wearableDeviceId]);
+
   if (isLoading || isRedirecting) {
     return (
       <DashboardLayout>
@@ -54,45 +94,6 @@ export default function DashboardPage() {
   const touristName = touristData.full_name ?? "Tourist";
   const safetyScore = typeof touristData.safety_score === "number" ? touristData.safety_score : 80;
   const wearableLinked = Boolean(touristData.device_id);
-  const wearableDeviceId = touristData.device_id ?? null;
-
-  // Fetch real connection status from the wearables table
-  const [wearableConnected, setWearableConnected] = useState(false);
-
-  useEffect(() => {
-    if (!wearableDeviceId) {
-      setWearableConnected(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchStatus = async () => {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data } = await supabase
-          .from("wearables")
-          .select("is_connected")
-          .eq("device_id", wearableDeviceId)
-          .maybeSingle();
-
-        if (!cancelled) {
-          setWearableConnected(Boolean(data?.is_connected));
-        }
-      } catch {
-        // ignore — will retry on next interval
-      }
-    };
-
-    fetchStatus();
-    // Poll every 30 seconds to keep status fresh
-    const interval = setInterval(fetchStatus, 30_000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [wearableDeviceId]);
 
   return (
     <DashboardClient
@@ -105,4 +106,3 @@ export default function DashboardPage() {
     />
   );
 }
-
