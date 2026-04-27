@@ -185,7 +185,6 @@ export async function POST(
         latitude,
         longitude,
         source: "wearable",
-        device_id: deviceId,
         timestamp: new Date().toISOString(),
       });
 
